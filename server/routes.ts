@@ -68,11 +68,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication middleware
-  const authenticate = async (req: Express.Request & { user?: { id: number, role: string } }, res: any, next: any) => {
-    // For simplicity, we'll assume authentication is done via session
-    // In production, you would verify JWT or session cookies
-    // Mock authentication for development
-    req.user = { id: 1, role: "doctor" };
+  const authenticate = async (req: Express.Request & { user?: { id: number, username: string, email: string, fullName: string, role: string } }, res: any, next: any) => {
+    // Check if user is authenticated via Passport
+    if (req.isAuthenticated && req.isAuthenticated()) {
+      // User is already authenticated by Passport
+      return next();
+    }
+    
+    // For development purposes, provide a default user if not authenticated
+    // In production, this would return a 401 Unauthorized error
+    req.user = { 
+      id: 1, 
+      username: "doctor_user",
+      email: "doctor@example.com",
+      fullName: "Dr. Sample User",
+      role: "doctor" 
+    };
     next();
   };
 
@@ -558,6 +569,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(notification);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // OCR Prescription Upload routes
+  apiRouter.post("/ocr-prescription/upload", authenticate, async (req, res, next) => {
+    try {
+      const { image, patientId, submittedBy } = req.body;
+      
+      if (!image || !patientId) {
+        return res.status(400).json({ error: "Image data and patient ID are required" });
+      }
+      
+      // Validate that the image is base64 encoded
+      if (!image.startsWith('data:image')) {
+        return res.status(400).json({ error: "Image must be base64 encoded" });
+      }
+      
+      // Ensure user object exists and has a default
+      const userId = req.user?.id || 1;
+      
+      // Insert the OCR prescription upload record
+      const upload = await db.insert(schema.ocrPrescriptionUploads).values({
+        patientId: parseInt(patientId),
+        imageUrl: image, // Using the correct field name from schema
+        status: 'pending',
+        extractedText: null,
+        confidenceScore: null,
+        errorMessage: null,
+      }).returning();
+      
+      // In a real implementation, this would trigger an OCR analysis job
+      // For now, we'll just return success
+      res.status(201).json({ 
+        id: upload[0].id,
+        message: "Prescription uploaded successfully and scheduled for OCR analysis"
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  apiRouter.get("/ocr-prescription/analysis/:id", authenticate, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid OCR analysis ID" });
+      }
+      
+      // Get the OCR analysis record
+      const analysis = await db.query.ocrPrescriptionUploads.findFirst({
+        where: eq(schema.ocrPrescriptionUploads.id, id)
+      });
+      
+      if (!analysis) {
+        return res.status(404).json({ error: "OCR analysis not found" });
+      }
+      
+      res.json(analysis);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Drug side effects route for patient alerts
+  apiRouter.get("/drug-side-effects/:medication", async (req, res, next) => {
+    try {
+      const { medication } = req.params;
+      
+      if (!medication) {
+        return res.status(400).json({ error: "Medication name is required" });
+      }
+      
+      // In a real implementation, we would query a drug side effects database
+      // For now, query the drug interactions table
+      const sideEffects = await db.query.drugInteractions.findMany({
+        where: eq(schema.drugInteractions.drugA, medication)
+      });
+      
+      res.json({ 
+        medication,
+        sideEffects: sideEffects.map(si => ({
+          effect: si.effect || '',
+          severity: si.severity
+        }))
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Symptom diagnosis mapping route for doctor dashboard
+  apiRouter.get("/symptom-diagnosis", async (req, res, next) => {
+    try {
+      const { symptoms } = req.query;
+      
+      if (!symptoms) {
+        return res.status(400).json({ error: "At least one symptom is required" });
+      }
+      
+      const symptomList = (symptoms as string).split(',').map(s => s.trim());
+      
+      // In a real implementation, we would search a symptom-diagnosis database
+      // For now, this would be implemented when the database is populated with real data
+      res.json({ 
+        symptoms: symptomList,
+        possibleDiagnoses: [],
+        message: "Symptom-diagnosis mapping will be available when database is populated"
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Patient vitals historical data route
+  apiRouter.get("/patient-vitals/history/:patientId", authenticate, async (req, res, next) => {
+    try {
+      const patientId = parseInt(req.params.patientId);
+      
+      if (isNaN(patientId)) {
+        return res.status(400).json({ error: "Invalid patient ID" });
+      }
+      
+      // Get the patient's health metrics, ordered by date
+      const vitals = await db.query.healthMetrics.findMany({
+        where: eq(schema.healthMetrics.patientId, patientId),
+        orderBy: [desc(schema.healthMetrics.recordedAt)]
+      });
+      
+      res.json(vitals);
     } catch (error) {
       next(error);
     }

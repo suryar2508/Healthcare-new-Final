@@ -19,6 +19,7 @@ import DoctorDashboardPage from "@/pages/doctor/DoctorDashboardPage";
 import PatientListPage from "@/pages/doctor/PatientListPage";
 import DoctorAppointmentsPage from "@/pages/doctor/DoctorAppointmentsPage";
 import PrescriptionsPage from "@/pages/doctor/PrescriptionsPage";
+import OCRPrescriptionPage from "@/pages/doctor/OCRPrescriptionPage";
 
 // Patient pages
 import PatientDashboardPage from "@/pages/patient/PatientDashboardPage";
@@ -83,6 +84,11 @@ function Router() {
       <ProtectedRoute 
         path="/doctor/prescriptions" 
         component={PrescriptionsPage} 
+        allowedRoles={["doctor"]} 
+      />
+      <ProtectedRoute 
+        path="/doctor/ocr-prescription" 
+        component={OCRPrescriptionPage} 
         allowedRoles={["doctor"]} 
       />
       
