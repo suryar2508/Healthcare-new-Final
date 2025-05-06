@@ -1,0 +1,62 @@
+> rest-express@1.0.0 dev
+9:38:38 AM [express] serving on port 5000
+9:39:03 AM [vite] hmr update /src/pages/patient/UploadPrescriptionPage.tsx, /src/index.css?v=TSREFuohnHstMhc3Y68nA
+9:39:12 AM [vite] hmr update /src/pages/patient/UploadPrescriptionPage.tsx, /src/index.css?v=TSREFuohnHstMhc3Y68nA (x2)
+9:39:17 AM [vite] hmr update /src/pages/patient/UploadPrescriptionPage.tsx, /src/index.css?v=TSREFuohnHstMhc3Y68nA (x3)
+9:39:57 AM [vite] hmr update /src/pages/patient/UploadPrescriptionPage.tsx, /src/index.css?v=TSREFuohnHstMhc3Y68nA (x4)
+9:40:04 AM [vite] hmr update /src/pages/patient/UploadPrescriptionPage.tsx, /src/index.css?v=TSREFuohnHstMhc3Y68nA (x5)
+9:40:23 AM [vite] hmr update /src/pages/patient/UploadPrescriptionPage.tsx, /src/index.css?v=TSREFuohnHstMhc3Y68nA (x6)
+Server error: PayloadTooLargeError: request entity too large
+    at readStream (/home/runner/workspace/node_modules/raw-body/index.js:163:17)
+    at getRawBody (/home/runner/workspace/node_modules/raw-body/index.js:116:12)
+    at read (/home/runner/workspace/node_modules/body-parser/lib/read.js:79:3)
+    at jsonParser (/home/runner/workspace/node_modules/body-parser/lib/types/json.js:138:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at expressInit (/home/runner/workspace/node_modules/express/lib/middleware/init.js:40:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at query (/home/runner/workspace/node_modules/express/lib/middleware/query.js:45:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/router/index.js:175:3)
+    at Function.handle (/home/runner/workspace/node_modules/express/lib/application.js:181:10)
+    at Server.app (/home/runner/workspace/node_modules/express/lib/express.js:39:9)
+    at Server.emit (node:events:518:28)
+    at parserOnIncoming (node:_http_server:1141:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17) {
+  expected: 192604,
+  length: 192604,
+  limit: 102400,
+  type: 'entity.too.large'
+}
+Error in Gemini prescription analysis: GoogleGenerativeAIFetchError: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent: [400 Bad Request] Invalid value at 'contents[0].parts[1].inline_data.data' (TYPE_BYTES), Base64 decoding failed for "data:image/jpeg;base64,bW9jayBpbWFnZSBkYXRh" [{"@type":"type.googleapis.com/google.rpc.BadRequest","fieldViolations":[{"field":"contents[0].parts[1].inline_data.data","description":"Invalid value at 'contents[0].parts[1].inline_data.data' (TYPE_BYTES), Base64 decoding failed for \"data:image/jpeg;base64,bW9jayBpbWFnZSBkYXRh\""}]}]
+    at handleResponseNotOk (file:///home/runner/workspace/node_modules/@google/generative-ai/dist/index.mjs:432:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async makeRequest (file:///home/runner/workspace/node_modules/@google/generative-ai/dist/index.mjs:401:9)
+    at async generateContent (file:///home/runner/workspace/node_modules/@google/generative-ai/dist/index.mjs:865:22)
+    at async GeminiService.analyzePrescriptionImage (/home/runner/workspace/server/services/gemini.service.ts:58:22)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:772:33) {
+  status: 400,
+  statusText: 'Bad Request',
+  errorDetails: [
+    {
+      '@type': 'type.googleapis.com/google.rpc.BadRequest',
+      fieldViolations: [Array]
+    }
+  ]
+}
+AI analysis error: Error: Failed to analyze prescription: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent: [400 Bad Request] Invalid value at 'contents[0].parts[1].inline_data.data' (TYPE_BYTES), Base64 decoding failed for "data:image/jpeg;base64,bW9jayBpbWFnZSBkYXRh" [{"@type":"type.googleapis.com/google.rpc.BadRequest","fieldViolations":[{"field":"contents[0].parts[1].inline_data.data","description":"Invalid value at 'contents[0].parts[1].inline_data.data' (TYPE_BYTES), Base64 decoding failed for \"data:image/jpeg;base64,bW9jayBpbWFnZSBkYXRh\""}]}]
+    at GeminiService.analyzePrescriptionImage (/home/runner/workspace/server/services/gemini.service.ts:88:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:772:33)
+9:46:07 AM [express] POST /api/ocr-prescription/upload 201 in 464ms :: {"id":1,"message":"Prescripti…

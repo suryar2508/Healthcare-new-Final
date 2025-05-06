@@ -15,6 +15,14 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
 
+  // Debug logging to identify authentication issues
+  console.log(`Protected route check for path: ${path}`);
+  console.log(`User authenticated: ${!!user}`);
+  if (user) {
+    console.log(`User role: ${user.role}`);
+    console.log(`Allowed roles: ${allowedRoles ? allowedRoles.join(', ') : 'all'}`);
+  }
+
   if (isLoading) {
     return (
       <Route path={path}>
@@ -28,6 +36,7 @@ export function ProtectedRoute({
   }
 
   if (!user) {
+    console.log('No user found, redirecting to auth page');
     return (
       <Route path={path}>
         {() => <Redirect to="/auth" />}
@@ -35,22 +44,38 @@ export function ProtectedRoute({
     );
   }
 
-  // Check if user has the required role
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return (
-      <Route path={path}>
-        {() => (
-          <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-            <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
-            <p className="text-muted-foreground">
-              You don't have permission to access this page.
-            </p>
-          </div>
-        )}
-      </Route>
-    );
+  // Check if user has the required role - with better fallback
+  if (allowedRoles && allowedRoles.length > 0) {
+    if (!user.role || !allowedRoles.includes(user.role)) {
+      console.log(`Access denied - user role ${user.role} not in allowed roles: ${allowedRoles.join(', ')}`);
+      return (
+        <Route path={path}>
+          {() => (
+            <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+              <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
+              <p className="text-muted-foreground">
+                You don't have permission to access this page.
+              </p>
+              <div className="mt-4">
+                <a 
+                  href="/" 
+                  className="text-sm text-primary hover:underline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.location.href = '/';
+                  }}
+                >
+                  Return to Home
+                </a>
+              </div>
+            </div>
+          )}
+        </Route>
+      );
+    }
   }
 
+  console.log(`Rendering component for path: ${path}`);
   return (
     <Route path={path}>
       {(params) => <Component {...params} />}
