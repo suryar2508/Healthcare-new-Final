@@ -567,6 +567,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // Doctor availability route
+  apiRouter.get("/doctors/availability", async (req, res, next) => {
+    try {
+      const { date, doctorId } = req.query;
+      
+      if (!date) {
+        return res.status(400).json({ error: "Date parameter is required" });
+      }
+      
+      const appointmentDate = new Date(date as string);
+      
+      if (isNaN(appointmentDate.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+      }
+      
+      let filters: any = {
+        appointmentDate: appointmentDate.toISOString().split('T')[0]
+      };
+      
+      if (doctorId) {
+        const docId = parseInt(doctorId as string);
+        if (!isNaN(docId)) {
+          filters.doctorId = docId;
+        }
+      }
+      
+      // Get all available time slots
+      const allTimeSlots = [
+        '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+        '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM',
+        '04:00 PM', '04:30 PM'
+      ];
+      
+      // Get booked appointments for the specified date and doctor
+      const bookedAppointments = await db.query.appointments.findMany({
+        where: and(
+          eq(schema.appointments.appointmentDate, filters.appointmentDate),
+          filters.doctorId ? eq(schema.appointments.doctorId, filters.doctorId) : undefined,
+          eq(schema.appointments.status, 'scheduled')
+        ),
+        columns: {
+          appointmentTime: true
+        }
+      });
+      
+      // Extract booked time slots
+      const bookedTimeSlots = bookedAppointments.map(apt => apt.appointmentTime);
+      
+      // Filter out booked slots to get available slots
+      const availableSlots = allTimeSlots.filter(slot => !bookedTimeSlots.includes(slot));
+      
+      res.json({ 
+        date: filters.appointmentDate, 
+        doctorId: filters.doctorId || 'all',
+        availableSlots 
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Quick appointment request
+  apiRouter.post("/appointments/quick-request", authenticate, async (req, res, next) => {
+    try {
+      const { patientId } = req.body;
+      
+      if (!patientId) {
+        return res.status(400).json({ error: "Patient ID is required" });
+      }
+      
+      // For quick request, just create a notification for admin/doctor
+      // This doesn't create an actual appointment but signals interest
+      
+      // Find an admin to notify
+      const adminUsers = await db.query.users.findMany({
+        where: eq(schema.users.role, 'admin'),
+        limit: 1
+      });
+      
+      if (adminUsers.length > 0) {
+        const adminNotification = {
+          userId: adminUsers[0].id,
+          title: "Quick Appointment Request",
+          message: `A patient (ID: ${patientId}) has requested a quick appointment`,
+          type: "appointment_request",
+          isRead: false,
+          data: { patientId }
+        };
+        
+        await notification.createNotification(adminNotification);
+      }
+      
+      res.status(200).json({ 
+        success: true,
+        message: "Your request has been sent. An administrator will contact you soon to schedule the appointment."
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Update appointment status
+  apiRouter.patch("/appointments/:id/status", authenticate, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid appointment ID" });
+      }
+      
+      if (!status || !['scheduled', 'completed', 'cancelled'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status value" });
+      }
+      
+      const updatedAppointment = await storage.updateAppointmentStatus(id, status);
+      
+      if (!updatedAppointment) {
+        return res.status(404).json({ error: "Appointment not found" });
+      }
+      
+      // Send notification about appointment status change
+      await notification.sendAppointmentStatusUpdateNotification(
+        updatedAppointment.patientId,
+        updatedAppointment.id,
+        status
+      );
+      
+      res.json(updatedAppointment);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   // Drug interactions route
   apiRouter.post("/check-drug-interactions", async (req, res, next) => {

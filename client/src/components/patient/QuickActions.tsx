@@ -15,11 +15,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  BookMedical,
   FileText,
   Bell,
   Calendar,
-  HeartPulse,
+  Heart,
   Phone,
   Upload,
   MessageSquare,

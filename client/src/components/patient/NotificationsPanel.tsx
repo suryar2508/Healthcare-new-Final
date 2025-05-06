@@ -43,14 +43,16 @@ export default function NotificationsPanel() {
       const res = await apiRequest('GET', '/api/notifications');
       return await res.json();
     },
-    enabled: !!user?.id,
-    onSuccess: (data) => {
-      if (Array.isArray(data)) {
-        const unreadCount = data.filter((notification: Notification) => !notification.isRead).length;
-        setNotificationCount(unreadCount);
-      }
-    }
+    enabled: !!user?.id
   });
+  
+  // Update unread count when notifications change
+  useEffect(() => {
+    if (notifications && Array.isArray(notifications)) {
+      const unreadCount = notifications.filter((notification: Notification) => !notification.isRead).length;
+      setNotificationCount(unreadCount);
+    }
+  }, [notifications]);
   
   // Mutation to mark notification as read
   const markAsReadMutation = useMutation({
