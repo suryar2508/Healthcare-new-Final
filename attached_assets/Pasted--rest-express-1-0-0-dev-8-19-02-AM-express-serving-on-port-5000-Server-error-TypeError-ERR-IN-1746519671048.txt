@@ -1,0 +1,35 @@
+> rest-express@1.0.0 dev
+8:19:02 AM [express] serving on port 5000
+Server error: TypeError [ERR_INVALID_ARG_TYPE]: The "salt" argument must be of type string or an instance of ArrayBuffer, Buffer, TypedArray, or DataView. Received undefined
+    at check (node:internal/crypto/scrypt:84:10)
+    at scrypt (node:internal/crypto/scrypt:46:13)
+    at node:internal/util:432:7
+    at new Promise (<anonymous>)
+    at scrypt (node:internal/util:418:12)
+    at comparePasswords (/home/runner/workspace/server/auth.ts:47:30)
+    at Strategy._verify (/home/runner/workspace/server/auth.ts:77:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'ERR_INVALID_ARG_TYPE'
+}
+Server error: TypeError [ERR_INVALID_ARG_TYPE]: The "salt" argument must be of type string or an instance of ArrayBuffer, Buffer, TypedArray, or DataView. Received undefined
+    at check (node:internal/crypto/scrypt:84:10)
+    at scrypt (node:internal/crypto/scrypt:46:13)
+    at node:internal/util:432:7
+    at new Promise (<anonymous>)
+    at scrypt (node:internal/util:418:12)
+    at comparePasswords (/home/runner/workspace/server/auth.ts:47:30)
+    at Strategy._verify (/home/runner/workspace/server/auth.ts:77:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'ERR_INVALID_ARG_TYPE'
+}
+Server error: TypeError [ERR_INVALID_ARG_TYPE]: The "salt" argument must be of type string or an instance of ArrayBuffer, Buffer, TypedArray, or DataView. Received undefined
+    at check (node:internal/crypto/scrypt:84:10)
+    at scrypt (node:internal/crypto/scrypt:46:13)
+    at node:internal/util:432:7
+    at new Promise (<anonymous>)
+    at scrypt (node:internal/util:418:12)
+    at comparePasswords (/home/runner/workspace/server/auth.ts:47:30)
+    at Strategy._verify (/home/runner/workspace/server/auth.ts:77:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'ERR_INVALID_ARG_TYPE'
+}

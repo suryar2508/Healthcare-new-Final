@@ -18,7 +18,7 @@ import { ZodError } from "zod";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { db } from "@db";
 import * as schema from "@shared/schema";
-import { openaiService } from "./services/openai.service";
+import { geminiService } from "./services/gemini.service";
 import { prescription as prescriptionService } from "./services/prescription.service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -558,12 +558,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.id || 1;
       
       try {
-        // Use OpenAI to analyze the prescription image
-        const analysisResults = await openaiService.analyzePrescriptionImage(image);
+        // Use Gemini AI to analyze the prescription image
+        const analysisResults = await geminiService.analyzePrescriptionImage(image);
         
         // Insert the OCR prescription upload record with analysis results
         const upload = await db.insert(schema.ocrPrescriptionUploads).values({
-          patientId: parseInt(patientId),
+          patientId: Number(patientId),
           imageUrl: image, 
           status: 'completed',
           extractedText: JSON.stringify(analysisResults),
@@ -581,7 +581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Store the upload but mark it as failed
         const upload = await db.insert(schema.ocrPrescriptionUploads).values({
-          patientId: parseInt(patientId),
+          patientId: Number(patientId),
           imageUrl: image,
           status: 'failed',
           extractedText: null,
