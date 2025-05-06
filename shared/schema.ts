@@ -142,6 +142,7 @@ export const medicationSchedules = pgTable("medication_schedules", {
   isActive: boolean("is_active").default(true).notNull(),
   instructions: text("instructions"),
   dosageStrength: text("dosage_strength"), // for storing values like "200mg", "500mg"
+  enableNotifications: boolean("enable_notifications").default(true), // Whether to send reminders for this medication
 });
 
 // Notifications table

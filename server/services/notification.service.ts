@@ -1,5 +1,8 @@
 import { storage } from "../storage";
 import { WebSocket } from "ws";
+import { db } from "@db";
+import * as schema from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 // Store connected WebSocket clients by userId
 const connectedClients: Map<number, WebSocket> = new Map();
@@ -467,6 +470,118 @@ class NotificationService {
     } catch (error) {
       console.error("Error checking health metric:", error);
       throw new Error("Failed to check health metric");
+    }
+  }
+  /**
+   * Create medication reminder notification for a patient
+   */
+  async createMedicationReminder(
+    scheduleId: number,
+    patientId: number,
+    medicationName: string,
+    timing: string
+  ) {
+    try {
+      // Get patient details to get userId
+      const patient = await storage.getPatientById(patientId);
+      if (!patient) {
+        throw new Error(`Patient with ID ${patientId} not found`);
+      }
+      
+      // Format timing message
+      let timingMessage = "";
+      switch (timing) {
+        case "before_food":
+          timingMessage = "before meals";
+          break;
+        case "with_food":
+          timingMessage = "with meals";
+          break;
+        case "after_food":
+          timingMessage = "after meals";
+          break;
+        case "no_food_restriction":
+        default:
+          timingMessage = "as scheduled";
+          break;
+      }
+      
+      // Create notification for patient
+      const notification = {
+        userId: patient.userId,
+        title: "Medication Reminder Setup",
+        message: `Reminder set for ${medicationName} ${timingMessage}. You'll receive notifications when it's time to take your medication.`,
+        type: "medication_reminder",
+        isRead: false,
+        data: { scheduleId, medicationName, timing }
+      };
+      
+      await this.createNotification(notification);
+      
+      return true;
+    } catch (error) {
+      console.error("Error creating medication reminder:", error);
+      throw new Error("Failed to create medication reminder");
+    }
+  }
+  
+  /**
+   * Send medication reminder notification
+   * This would typically be called by a scheduled job
+   */
+  async sendMedicationReminderNotification(scheduleId: number) {
+    try {
+      // In a real implementation, we would get the medication schedule
+      // from the database using the scheduleId
+      const schedule = await db.query.medicationSchedules.findFirst({
+        where: eq(schema.medicationSchedules.id, scheduleId),
+        with: {
+          patient: {
+            with: {
+              user: true
+            }
+          }
+        }
+      });
+      
+      if (!schedule) {
+        throw new Error(`Medication schedule with ID ${scheduleId} not found`);
+      }
+      
+      // Format timing message
+      let timingMessage = "";
+      switch (schedule.timing) {
+        case "before_food":
+          timingMessage = "Take this medication before meals";
+          break;
+        case "with_food":
+          timingMessage = "Take this medication with meals";
+          break;
+        case "after_food":
+          timingMessage = "Take this medication after meals";
+          break;
+        case "no_food_restriction":
+        default:
+          timingMessage = "Take this medication as scheduled";
+          break;
+      }
+      
+      // Create notification for patient
+      const notification = {
+        userId: schedule.patient.user.id,
+        title: "Time to Take Your Medication",
+        message: `Reminder: It's time to take ${schedule.medicationName}. ${timingMessage}.`,
+        type: "medication_due",
+        isRead: false,
+        data: { scheduleId, medicationName: schedule.medicationName }
+      };
+      
+      await this.createNotification(notification);
+      
+      return true;
+    } catch (error) {
+      console.error("Error sending medication reminder notification:", error);
+      throw new Error("Failed to send medication reminder notification");
     }
   }
 }
