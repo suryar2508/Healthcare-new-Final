@@ -276,18 +276,29 @@ export default function DoctorsPage() {
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select a user" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {!usersLoading && users?.map((user: any) => (
-                                <SelectItem key={user.id} value={user.id.toString()}>
-                                  {user.fullName || user.username}
-                                </SelectItem>
-                              ))}
+                              {usersLoading ? (
+                                <SelectItem value="loading" disabled>Loading users...</SelectItem>
+                              ) : users && users.length > 0 ? (
+                                users
+                                  .filter((user: any) => user.role !== 'doctor') // Only show non-doctor users
+                                  .map((user: any) => (
+                                    <SelectItem key={user.id} value={user.id.toString()}>
+                                      {user.fullName || user.username} ({user.email})
+                                    </SelectItem>
+                                  ))
+                              ) : (
+                                <SelectItem value="none" disabled>No available users</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
+                          <FormDescription>
+                            Select a user account to associate with this doctor profile.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
