@@ -72,10 +72,17 @@ class NotificationService {
       }
       
       // Create notification for patient
+      let doctorName = "Your doctor";
+      
+      // Safely access the doctor's name if available
+      if (prescription.doctor && prescription.doctor.user) {
+        doctorName = `Dr. ${prescription.doctor.user.fullName}`;
+      }
+      
       const patientNotification = {
         userId: patient.userId,
         title: "New Prescription",
-        message: `Dr. ${prescription.doctor.user.fullName} has prescribed you new medications.`,
+        message: `${doctorName} has prescribed you new medications.`,
         type: "prescription",
         isRead: false,
         data: { prescriptionId }
