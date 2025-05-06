@@ -1,194 +1,425 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import AppointmentTable from '@/components/appointments/AppointmentTable';
-import AppointmentCalendar from '@/components/appointments/AppointmentCalendar';
+import { useAuth } from "@/hooks/use-auth";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Calendar, Clock, Filter, Download, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AppointmentsPage() {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [viewType, setViewType] = useState<string>('table');
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const { user } = useAuth();
   
-  // Fetch all appointments
-  const { data: appointments, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ['/api/appointments'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/appointments', undefined);
-      return await response.json();
-    }
+  // Get the current date
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
   });
   
-  // Update appointment status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await apiRequest('PATCH', `/api/appointments/${id}/status`, { status });
-      return await response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Appointment updated",
-        description: "The appointment status has been updated successfully",
-        variant: "default",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] });
-      setSelectedAppointment(null);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error updating appointment",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
-    }
-  });
-  
-  // Handle appointment status update
-  const handleUpdateStatus = (appointmentId: number, status: string) => {
-    updateStatusMutation.mutate({ id: appointmentId, status });
-  };
-  
-  // Handle appointment selection for details view
-  const handleViewDetails = (appointment: any) => {
-    setSelectedAppointment(appointment);
-  };
-
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch (e) {
-      return 'Invalid date';
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-heading font-medium text-gray-900">Appointments Management</h1>
+    <div className="container mx-auto p-6">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Appointments</h1>
+          <p className="text-muted-foreground">
+            Manage and monitor all appointments
+          </p>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+          <Button>
+            <Calendar className="mr-2 h-4 w-4" />
+            Schedule Appointment
+          </Button>
+        </div>
+      </div>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle>Appointments</CardTitle>
-          <div className="flex space-x-2">
-            <Tabs value={viewType} onValueChange={setViewType} className="w-[400px]">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="table" className="flex items-center">
-                  <span className="material-icons mr-2 text-sm">view_list</span>
-                  List View
-                </TabsTrigger>
-                <TabsTrigger value="calendar" className="flex items-center">
-                  <span className="material-icons mr-2 text-sm">calendar_month</span>
-                  Calendar View
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          <TabsContent value="table" className="mt-0">
-            <AppointmentTable 
-              onViewDetails={handleViewDetails} 
-              onUpdateStatus={handleUpdateStatus}
-            />
-          </TabsContent>
-          
-          <TabsContent value="calendar" className="mt-0">
-            {appointmentsLoading ? (
-              <div className="text-center py-10">
-                <p>Loading appointment calendar...</p>
-              </div>
-            ) : (
-              <AppointmentCalendar 
-                appointments={appointments || []} 
-                onAppointmentSelect={handleViewDetails}
-              />
-            )}
-          </TabsContent>
-        </CardContent>
-      </Card>
-      
-      {/* Appointment Details Dialog */}
-      {selectedAppointment && (
-        <Dialog open={!!selectedAppointment} onOpenChange={() => setSelectedAppointment(null)}>
-          <DialogContent className="sm:max-w-[550px]">
-            <DialogHeader>
-              <DialogTitle>Appointment Details</DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-500">
-                  <span className="material-icons text-xl">event</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-medium">{formatDate(selectedAppointment.appointmentDate)}</h3>
-                  <p className="text-gray-500">{selectedAppointment.appointmentTime}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Patient</p>
-                  <p>{selectedAppointment.patient?.user?.fullName || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Doctor</p>
-                  <p>{selectedAppointment.doctor?.user?.fullName || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Status</p>
-                  <p className="capitalize">{selectedAppointment.status}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Reason</p>
-                  <p>{selectedAppointment.reason || 'General consultation'}</p>
-                </div>
-                {selectedAppointment.notes && (
-                  <div className="col-span-2">
-                    <p className="text-sm font-medium text-gray-500">Notes</p>
-                    <p className="text-sm mt-1 p-2 bg-gray-50 rounded-md">{selectedAppointment.notes}</p>
-                  </div>
-                )}
-              </div>
-              
-              {selectedAppointment.status === 'scheduled' && (
-                <div className="flex space-x-2 justify-end pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-                    onClick={() => handleUpdateStatus(selectedAppointment.id, 'completed')}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    <span className="material-icons mr-2 text-sm">check_circle</span>
-                    Mark as Completed
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                    onClick={() => handleUpdateStatus(selectedAppointment.id, 'cancelled')}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    <span className="material-icons mr-2 text-sm">cancel</span>
-                    Cancel Appointment
-                  </Button>
-                </div>
-              )}
+      <div className="grid gap-4 md:grid-cols-4 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-md font-medium">Today's Appointments</CardTitle>
+            <CardDescription>Scheduled for today</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">18</div>
+            <div className="flex justify-between items-center mt-4">
+              <div className="text-sm text-muted-foreground">Across all doctors</div>
+              <Calendar className="h-5 w-5 text-muted-foreground" />
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-md font-medium">Confirmed</CardTitle>
+            <CardDescription>Ready to proceed</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">15</div>
+            <div className="flex justify-between items-center mt-4">
+              <div className="text-sm text-muted-foreground">83% of all appointments</div>
+              <Badge className="bg-green-100 text-green-800">+2 from yesterday</Badge>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-md font-medium">Pending</CardTitle>
+            <CardDescription>Awaiting confirmation</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">3</div>
+            <div className="flex justify-between items-center mt-4">
+              <div className="text-sm text-muted-foreground">17% of all appointments</div>
+              <Badge variant="outline">-1 from yesterday</Badge>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-md font-medium">Available Slots</CardTitle>
+            <CardDescription>Open for scheduling</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">12</div>
+            <div className="flex justify-between items-center mt-4">
+              <div className="text-sm text-muted-foreground">Across 8 doctors</div>
+              <Button variant="outline" size="sm">View Calendar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0 mb-4">
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 w-full max-w-xl">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search appointments..."
+              className="pl-8"
+            />
+          </div>
+          
+          <Select defaultValue="today">
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by date" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="tomorrow">Tomorrow</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select defaultValue="all">
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by doctor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Doctors</SelectItem>
+              <SelectItem value="dr_johnson">Dr. Johnson</SelectItem>
+              <SelectItem value="dr_chen">Dr. Chen</SelectItem>
+              <SelectItem value="dr_patel">Dr. Patel</SelectItem>
+              <SelectItem value="dr_williams">Dr. Williams</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex space-x-2 items-center">
+          <Button variant="outline" size="icon">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-sm font-medium">{formattedDate}</div>
+          <Button variant="outline" size="icon">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      
+      <Tabs defaultValue="all">
+        <TabsList className="mb-4">
+          <TabsTrigger value="all">All Appointments</TabsTrigger>
+          <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all">
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">Time</th>
+                      <th className="text-left p-4">Patient</th>
+                      <th className="text-left p-4">Doctor</th>
+                      <th className="text-left p-4">Purpose</th>
+                      <th className="text-left p-4">Status</th>
+                      <th className="text-left p-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>09:00 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">John Smith</td>
+                      <td className="p-4">Dr. Sarah Johnson</td>
+                      <td className="p-4">Regular Checkup</td>
+                      <td className="p-4">
+                        <Badge className="bg-green-100 text-green-800">Confirmed</Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>09:30 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">Maria Garcia</td>
+                      <td className="p-4">Dr. David Williams</td>
+                      <td className="p-4">Diabetes Follow-up</td>
+                      <td className="p-4">
+                        <Badge className="bg-amber-100 text-amber-800">Pending</Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Confirm</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>10:00 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">Robert Chen</td>
+                      <td className="p-4">Dr. Michael Chen</td>
+                      <td className="p-4">Cardiology Consultation</td>
+                      <td className="p-4">
+                        <Badge className="bg-green-100 text-green-800">Confirmed</Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>10:30 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">Emily Wilson</td>
+                      <td className="p-4">Dr. Sarah Johnson</td>
+                      <td className="p-4">Annual Physical</td>
+                      <td className="p-4">
+                        <Badge className="bg-green-100 text-green-800">Confirmed</Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>11:00 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">James Wilson</td>
+                      <td className="p-4">Dr. Priya Patel</td>
+                      <td className="p-4">Vaccination</td>
+                      <td className="p-4">
+                        <Badge className="bg-amber-100 text-amber-800">Pending</Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Confirm</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="confirmed">
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">Time</th>
+                      <th className="text-left p-4">Patient</th>
+                      <th className="text-left p-4">Doctor</th>
+                      <th className="text-left p-4">Purpose</th>
+                      <th className="text-left p-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>09:00 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">John Smith</td>
+                      <td className="p-4">Dr. Sarah Johnson</td>
+                      <td className="p-4">Regular Checkup</td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>10:00 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">Robert Chen</td>
+                      <td className="p-4">Dr. Michael Chen</td>
+                      <td className="p-4">Cardiology Consultation</td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>10:30 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">Emily Wilson</td>
+                      <td className="p-4">Dr. Sarah Johnson</td>
+                      <td className="p-4">Annual Physical</td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Edit</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="pending">
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">Time</th>
+                      <th className="text-left p-4">Patient</th>
+                      <th className="text-left p-4">Doctor</th>
+                      <th className="text-left p-4">Purpose</th>
+                      <th className="text-left p-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>09:30 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">Maria Garcia</td>
+                      <td className="p-4">Dr. David Williams</td>
+                      <td className="p-4">Diabetes Follow-up</td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Confirm</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                          <span>11:00 AM</span>
+                        </div>
+                      </td>
+                      <td className="p-4 font-medium">James Wilson</td>
+                      <td className="p-4">Dr. Priya Patel</td>
+                      <td className="p-4">Vaccination</td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">Confirm</Button>
+                          <Button variant="ghost" size="sm">Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="cancelled">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="flex flex-col items-center justify-center py-4">
+                <div className="mb-4 rounded-full bg-muted p-3">
+                  <Calendar className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold">No Cancelled Appointments</h3>
+                <p className="text-muted-foreground mt-2">There are no cancelled appointments for today.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

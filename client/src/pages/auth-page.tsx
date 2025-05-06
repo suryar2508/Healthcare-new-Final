@@ -172,7 +172,7 @@ export default function AuthPage() {
                   </Form>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2">
-                  <p className="text-sm text-muted-foreground mb-2">Quick Login:</p>
+                  <p className="text-sm text-muted-foreground mb-2">Demo Accounts:</p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     <Button variant="outline" size="sm" onClick={() => fillLoginWithDefault("admin")}>
                       Admin
@@ -186,6 +186,20 @@ export default function AuthPage() {
                     <Button variant="outline" size="sm" onClick={() => fillLoginWithDefault("pharmacist")}>
                       Pharmacist
                     </Button>
+                  </div>
+                  <div className="mt-4 text-xs text-muted-foreground border border-dashed border-muted-foreground/50 p-3 rounded-md">
+                    <p className="font-medium mb-1">Default Login Credentials:</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                      <div>Admin: <span className="font-mono">admin</span></div>
+                      <div>Password: <span className="font-mono">password123</span></div>
+                      <div>Doctor: <span className="font-mono">dr.johnson</span></div>
+                      <div>Password: <span className="font-mono">password123</span></div>
+                      <div>Patient: <span className="font-mono">john.doe</span></div>
+                      <div>Password: <span className="font-mono">password123</span></div>
+                      <div>Pharmacist: <span className="font-mono">pharmacy1</span></div>
+                      <div>Password: <span className="font-mono">password123</span></div>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground/70">Click on any role button above to auto-fill login form</p>
                   </div>
                 </CardFooter>
               </Card>
