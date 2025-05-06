@@ -15,7 +15,7 @@ export default function VitalsAnalyzer() {
   const { toast } = useToast();
   
   // Get list of patients for the select dropdown
-  const { data: patients, isLoading: patientsLoading } = useQuery({
+  const { data: patients = [], isLoading: patientsLoading } = useQuery<any[]>({
     queryKey: ['/api/patients'],
     enabled: true,
   });

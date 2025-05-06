@@ -15,6 +15,7 @@ import {
   Brain
 } from "lucide-react";
 import SymptomAnalyzer from "@/components/doctor/SymptomAnalyzer";
+import VitalsAnalyzer from "@/components/doctor/VitalsAnalyzer";
 
 export default function DoctorDashboardPage() {
   const { user } = useAuth();
@@ -261,23 +262,7 @@ export default function DoctorDashboardPage() {
         <div className="grid gap-6 md:grid-cols-2">
           <SymptomAnalyzer />
           
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Activity className="mr-2 h-5 w-5 text-primary" />
-                Patient Vitals Analysis
-              </CardTitle>
-              <CardDescription>
-                AI analysis of patient vitals over time for health trends
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">Select a patient to analyze their vitals data and identify health trends.</p>
-              <Button className="w-full">
-                Access Vitals Analysis
-              </Button>
-            </CardContent>
-          </Card>
+          <VitalsAnalyzer />
         </div>
       </div>
     </div>
