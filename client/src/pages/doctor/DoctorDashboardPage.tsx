@@ -11,8 +11,10 @@ import {
   FileText,
   AlertTriangle,
   Pill,
-  Bell
+  Bell,
+  Brain
 } from "lucide-react";
+import SymptomAnalyzer from "@/components/doctor/SymptomAnalyzer";
 
 export default function DoctorDashboardPage() {
   const { user } = useAuth();
@@ -208,12 +210,12 @@ export default function DoctorDashboardPage() {
             
             <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-md font-medium">Schedule</CardTitle>
-                <Clock className="h-5 w-5 text-primary" />
+                <CardTitle className="text-md font-medium">Diagnose Symptoms</CardTitle>
+                <Brain className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Manage your calendar
+                  AI-powered diagnosis
                 </p>
               </CardContent>
             </Card>
@@ -249,6 +251,31 @@ export default function DoctorDashboardPage() {
                   <Button variant="outline" size="sm" className="mt-2">View Results</Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">AI-Powered Diagnostic Tools</h2>
+        <div className="grid gap-6 md:grid-cols-2">
+          <SymptomAnalyzer />
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Activity className="mr-2 h-5 w-5 text-primary" />
+                Patient Vitals Analysis
+              </CardTitle>
+              <CardDescription>
+                AI analysis of patient vitals over time for health trends
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4">Select a patient to analyze their vitals data and identify health trends.</p>
+              <Button className="w-full">
+                Access Vitals Analysis
+              </Button>
             </CardContent>
           </Card>
         </div>
