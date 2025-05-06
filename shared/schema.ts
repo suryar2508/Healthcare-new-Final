@@ -7,6 +7,7 @@ import { relations } from "drizzle-orm";
 export const userRoleEnum = pgEnum('user_role', ['admin', 'doctor', 'patient', 'pharmacist']);
 export const appointmentStatusEnum = pgEnum('appointment_status', ['scheduled', 'completed', 'cancelled']);
 export const medicationFrequencyEnum = pgEnum('medication_frequency', ['once_daily', 'twice_daily', 'three_times_daily', 'four_times_daily', 'as_needed']);
+export const medicationTimingEnum = pgEnum('medication_timing', ['before_food', 'with_food', 'after_food', 'no_food_restriction']);
 export const prescriptionStatusEnum = pgEnum('prescription_status', ['pending', 'processing', 'ready', 'delivered', 'cancelled']);
 export const inventoryStatusEnum = pgEnum('inventory_status', ['in_stock', 'low_stock', 'out_of_stock', 'expired', 'discontinued']);
 export const feedbackRatingEnum = pgEnum('feedback_rating', ['1', '2', '3', '4', '5']);
@@ -137,8 +138,10 @@ export const medicationSchedules = pgTable("medication_schedules", {
   startDate: date("start_date").notNull(),
   endDate: date("end_date"),
   timeOfDay: text("time_of_day"), // morning, afternoon, evening, or specific times
+  timing: medicationTimingEnum("timing").default('no_food_restriction'), // before food, with food, after food, etc.
   isActive: boolean("is_active").default(true).notNull(),
   instructions: text("instructions"),
+  dosageStrength: text("dosage_strength"), // for storing values like "200mg", "500mg"
 });
 
 // Notifications table

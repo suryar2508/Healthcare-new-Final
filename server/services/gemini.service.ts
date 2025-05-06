@@ -25,6 +25,12 @@ class GeminiService {
     try {
       const model = this.genAI.getGenerativeModel({ model: this.MODEL_NAME });
 
+      // Clean up the base64 image data by removing the prefix if present
+      let cleanedBase64 = imageBase64;
+      if (imageBase64.includes('base64,')) {
+        cleanedBase64 = imageBase64.split('base64,')[1];
+      }
+
       // Create prompt parts with the image
       const promptParts = [
         {
@@ -49,7 +55,7 @@ class GeminiService {
         {
           inlineData: {
             mimeType: "image/jpeg",
-            data: imageBase64
+            data: cleanedBase64
           }
         }
       ];
