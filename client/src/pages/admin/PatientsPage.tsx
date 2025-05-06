@@ -48,12 +48,20 @@ export default function PatientsPage() {
   });
 
   // Fetch specific patient's health metrics when selected
-  const { data: healthMetrics, isLoading: metricsLoading } = useQuery({
+  const { data: healthMetrics, isLoading: metricsLoading, refetch: refetchHealthMetrics } = useQuery({
     queryKey: ['/api/health-metrics', selectedPatient?.id],
     queryFn: async () => {
-      if (!selectedPatient) return null;
-      const response = await apiRequest('GET', `/api/health-metrics?patientId=${selectedPatient.id}`, undefined);
-      return await response.json();
+      if (!selectedPatient) return [];
+      try {
+        console.log(`Fetching health metrics for patient ${selectedPatient.id}`);
+        const response = await apiRequest('GET', `/api/health-metrics?patientId=${selectedPatient.id}`, undefined);
+        const data = await response.json();
+        console.log(`Retrieved ${data.length} health metrics`);
+        return data;
+      } catch (error) {
+        console.error('Error fetching health metrics:', error);
+        return [];
+      }
     },
     enabled: !!selectedPatient && viewType === 'health'
   });
