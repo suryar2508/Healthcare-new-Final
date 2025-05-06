@@ -89,6 +89,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // API Routes
   const apiRouter = Router();
+  
+  // Debug routes (no authentication needed)
+  apiRouter.get("/debug/users", async (req, res) => {
+    try {
+      const users = await db.select({
+        id: schema.users.id,
+        username: schema.users.username, 
+        role: schema.users.role,
+        passwordLength: sql<number>`length(${schema.users.password})`
+      }).from(schema.users).limit(10);
+      
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+  
+  // Create a debug route to specifically check admin user
+  apiRouter.get("/debug/check-admin", async (req, res) => {
+    try {
+      const adminUser = await db.select().from(schema.users)
+        .where(eq(schema.users.username, "admin"))
+        .limit(1);
+      
+      if (adminUser.length === 0) {
+        return res.status(404).json({ message: "Admin user not found" });
+      }
+      
+      res.json({
+        id: adminUser[0].id,
+        username: adminUser[0].username,
+        role: adminUser[0].role,
+        passwordHash: adminUser[0].password
+      });
+    } catch (error) {
+      console.error("Error checking admin:", error);
+      res.status(500).json({ error: "Failed to check admin user" });
+    }
+  });
+  
   app.use("/api", apiRouter);
 
   // Error handling middleware
