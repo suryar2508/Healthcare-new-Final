@@ -43,6 +43,7 @@ export default function UploadPrescriptionPage() {
   const [base64Image, setBase64Image] = useState<string | null>(null);
   const [notes, setNotes] = useState<string>('');
   const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [uploadId, setUploadId] = useState<number | null>(null);
   
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,8 +87,30 @@ export default function UploadPrescriptionPage() {
         description: 'Your prescription has been successfully processed',
       });
       
-      // Store analysis results
-      setAnalysisResults(data.analysisResults);
+      // Store upload ID and extracted data
+      setUploadId(data.id);
+      
+      // Parse the extracted text from JSON string if it exists
+      if (data.extractedText) {
+        try {
+          const extractedData = JSON.parse(data.extractedText);
+          setAnalysisResults(extractedData);
+        } catch (error) {
+          console.error("Error parsing extracted text:", error);
+          setAnalysisResults({
+            medications: [],
+            doctor: {},
+            diagnosis: "Error parsing prescription data"
+          });
+        }
+      } else {
+        // Handle case where no text was extracted
+        setAnalysisResults({
+          medications: [],
+          doctor: {},
+          diagnosis: "No data could be extracted from the prescription"
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -101,11 +124,11 @@ export default function UploadPrescriptionPage() {
   // Convert OCR results to prescription
   const convertToPrescriptionMutation = useMutation({
     mutationFn: async () => {
-      if (!analysisResults || !analysisResults.id) {
-        throw new Error('No analysis results to convert');
+      if (!uploadId) {
+        throw new Error('No prescription upload to convert');
       }
       
-      const res = await apiRequest('POST', `/api/ocr-prescription/convert/${analysisResults.id}`);
+      const res = await apiRequest('POST', `/api/ocr-prescription/convert/${uploadId}`);
       return await res.json();
     },
     onSuccess: (data) => {
@@ -128,12 +151,12 @@ export default function UploadPrescriptionPage() {
   
   // Generate bill from prescription
   const generateBillMutation = useMutation({
-    mutationFn: async () => {
-      if (!analysisResults || !analysisResults.prescription?.id) {
+    mutationFn: async (prescriptionId: number) => {
+      if (!prescriptionId) {
         throw new Error('No prescription found to generate bill');
       }
       
-      const res = await apiRequest('POST', `/api/billing/generate/${analysisResults.prescription.id}`);
+      const res = await apiRequest('POST', `/api/billing/generate/${prescriptionId}`);
       return await res.json();
     },
     onSuccess: (data) => {
@@ -161,6 +184,7 @@ export default function UploadPrescriptionPage() {
     setBase64Image(null);
     setNotes('');
     setAnalysisResults(null);
+    setUploadId(null);
   };
   
   // Render medications from analysis results
