@@ -48,9 +48,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
+    refetch
   } = useQuery<User | null, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull", on403: "returnNull" }),
+    // Improve fetching to ensure we can refresh the authentication state
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
+    retry: 1
   });
 
   const loginMutation = useMutation({
@@ -74,10 +79,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      refetch(); // Explicitly refetch user data after login
+      
+      // Determine redirect path based on user role
+      const redirectPath = (() => {
+        switch (user.role) {
+          case "admin": return "/admin";
+          case "doctor": return "/doctor";
+          case "patient": return "/patient";
+          case "pharmacist": return "/pharmacist";
+          default: return "/";
+        }
+      })();
+      
       toast({
         title: "Welcome back!",
         description: `Successfully logged in as ${user.username}`,
       });
+      
+      // Navigate to the appropriate dashboard page
+      window.location.href = redirectPath;
     },
     onError: (error: Error) => {
       // Clean up error message for better user experience
@@ -114,10 +135,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
+      refetch(); // Explicitly refetch user data after registration
+      
+      // Determine redirect path based on user role
+      const redirectPath = (() => {
+        switch (user.role) {
+          case "admin": return "/admin";
+          case "doctor": return "/doctor";
+          case "patient": return "/patient";
+          case "pharmacist": return "/pharmacist";
+          default: return "/";
+        }
+      })();
+      
       toast({
         title: "Registration successful",
         description: "Your account has been created successfully",
       });
+      
+      // Navigate to the appropriate dashboard page
+      window.location.href = redirectPath;
     },
     onError: (error: Error) => {
       // Clean up error message for better user experience
@@ -148,10 +185,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      refetch(); // Explicitly refetch to update auth state
+      
       toast({
         title: "Logged out",
         description: "You have been logged out successfully",
       });
+      
+      // Redirect to login page
+      setTimeout(() => {
+        window.location.href = "/auth";
+      }, 500);
     },
     onError: (error: Error) => {
       // Clean up error message for better user experience

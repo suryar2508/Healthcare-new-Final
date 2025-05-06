@@ -69,10 +69,21 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`Authentication attempt for username: ${username}`);
+        
         const user = await storage.getUserByUsername(username);
-        if (!user || !comparePasswords(password, user.password)) {
+        if (!user) {
+          console.log(`User not found: ${username}`);
           return done(null, false, { message: "Invalid username or password" });
         }
+        
+        if (!comparePasswords(password, user.password)) {
+          console.log(`Invalid password for user: ${username}`);
+          return done(null, false, { message: "Invalid username or password" });
+        }
+        
+        // Success path
+        console.log(`Successful login for: ${username}, role: ${user.role}`);
         const safeUser: SafeUser = {
           id: user.id,
           username: user.username,
@@ -82,6 +93,7 @@ export function setupAuth(app: Express) {
         };
         return done(null, safeUser);
       } catch (error) {
+        console.error("Authentication error:", error);
         return done(error);
       }
     }),
@@ -91,8 +103,11 @@ export function setupAuth(app: Express) {
   
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.log(`Deserializing user with ID: ${id}`);
       const user = await storage.getUserById(id);
+      
       if (!user) {
+        console.log(`User with ID ${id} not found during deserialization`);
         return done(null, false);
       }
       
@@ -103,8 +118,11 @@ export function setupAuth(app: Express) {
         fullName: user.fullName || "",
         role: user.role,
       };
+      
+      console.log(`Successfully deserialized user: ${user.username}, role: ${user.role}`);
       done(null, safeUser);
     } catch (error) {
+      console.error(`Error deserializing user with ID ${id}:`, error);
       done(error, null);
     }
   });
@@ -159,14 +177,31 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
+    console.log(`Login attempt received for username: ${req.body.username}`);
+    
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
-      if (err) return next(err);
+      if (err) {
+        console.error("Login error:", err);
+        return next(err);
+      }
+      
       if (!user) {
+        console.log(`Login failed for ${req.body.username}: ${info?.message || "Authentication failed"}`);
         return res.status(401).json({ message: info?.message || "Authentication failed" });
       }
       
       req.login(user, (loginErr) => {
-        if (loginErr) return next(loginErr);
+        if (loginErr) {
+          console.error(`Session establishment error for ${req.body.username}:`, loginErr);
+          return next(loginErr);
+        }
+        
+        console.log(`Login successful for ${user.username}, role: ${user.role}, session established`);
+        
+        // Clear sensitive data from logs
+        const { password, ...safeBodyData } = req.body;
+        console.log("Login request data:", safeBodyData);
+        
         return res.json(user);
       });
     })(req, res, next);
