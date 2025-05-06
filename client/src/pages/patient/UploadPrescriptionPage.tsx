@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Upload, FileImage, FileText, FilePlus2, FilePen, AlertCircle, CheckCircle, Ban } from "lucide-react";
+import { Loader2, Upload, FileImage, FileText, FilePlus2, FilePen, AlertCircle, CheckCircle, Ban, Undo2 } from "lucide-react";
 import { 
   Table, 
   TableBody, 
