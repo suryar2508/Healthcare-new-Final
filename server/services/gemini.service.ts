@@ -275,7 +275,8 @@ class GeminiService {
       }
     } catch (error) {
       console.error("Error in Gemini symptom analysis:", error);
-      throw new Error(`Failed to analyze symptoms: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to analyze symptoms: ${errorMessage}`);
     }
   }
 
@@ -341,7 +342,8 @@ class GeminiService {
       }
     } catch (error) {
       console.error("Error in Gemini vitals analysis:", error);
-      throw new Error(`Failed to analyze vitals data: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to analyze vitals data: ${errorMessage}`);
     }
   }
 }

@@ -45,19 +45,37 @@ export async function apiRequest(
   return res;
 }
 
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
+type ResponseBehavior = "returnNull" | "throw";
+type QueryFnOptions = {
+  on401: ResponseBehavior;
+  on403?: ResponseBehavior;
+};
+
+export const getQueryFn: <T>(options: QueryFnOptions) => QueryFunction<T> =
+  ({ on401: unauthorizedBehavior, on403: forbiddenBehavior = "throw" }) =>
   async ({ queryKey }) => {
     try {
-      const res = await fetch(queryKey[0] as string, {
+      const url = queryKey[0] as string;
+      console.log(`Making request to: ${url}`);
+      
+      const res = await fetch(url, {
         credentials: "include",
       });
 
-      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
+      // Handle unauthorized (not logged in)
+      if (res.status === 401) {
+        console.log(`401 Unauthorized response from ${url}`);
+        if (unauthorizedBehavior === "returnNull") {
+          return null;
+        }
+      }
+      
+      // Handle forbidden (logged in but no permission)
+      if (res.status === 403) {
+        console.log(`403 Forbidden response from ${url}`);
+        if (forbiddenBehavior === "returnNull") {
+          return null;
+        }
       }
 
       await throwIfResNotOk(res);
