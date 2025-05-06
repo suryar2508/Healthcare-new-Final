@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express, Request } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -23,6 +23,15 @@ declare global {
     }
   }
 }
+
+// Modified User type to handle nullable fields in database
+type SafeUser = {
+  id: number;
+  username: string;
+  email: string;
+  fullName: string;
+  role: typeof userRoleEnum.enumValues[number];
+};
 
 const scryptAsync = promisify(scrypt);
 
@@ -67,13 +76,14 @@ export function setupAuth(app: Express) {
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false, { message: "Invalid username or password" });
         }
-        return done(null, {
+        const safeUser: SafeUser = {
           id: user.id,
           username: user.username,
           email: user.email || "",
           fullName: user.fullName || "",
           role: user.role,
-        });
+        };
+        return done(null, safeUser);
       } catch (error) {
         return done(error);
       }
@@ -89,13 +99,14 @@ export function setupAuth(app: Express) {
         return done(null, false);
       }
       
-      done(null, {
+      const safeUser: SafeUser = {
         id: user.id,
         username: user.username,
         email: user.email || "",
         fullName: user.fullName || "",
         role: user.role,
-      });
+      };
+      done(null, safeUser);
     } catch (error) {
       done(error, null);
     }
@@ -128,8 +139,17 @@ export function setupAuth(app: Express) {
         role,
       });
 
+      // Create a safe user for login
+      const safeUser: SafeUser = {
+        id: user.id,
+        username: user.username,
+        email: user.email || "",
+        fullName: user.fullName || "",
+        role: user.role,
+      };
+      
       // Auto-login after registration
-      req.login(user, (err) => {
+      req.login(safeUser, (err) => {
         if (err) return next(err);
         
         // Don't include password in response
@@ -142,7 +162,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "Authentication failed" });
@@ -174,8 +194,8 @@ export function setupAuth(app: Express) {
   });
 
   // Middleware to check if user has required role
-  export function requireRole(roles: string[]) {
-    return (req: Request, res: Express.Response, next: Express.NextFunction) => {
+  function requireRole(roles: string[]) {
+    return (req: Request, res: Response, next: NextFunction) => {
       if (!req.isAuthenticated()) {
         return res.status(401).json({ message: "Not authenticated" });
       }
