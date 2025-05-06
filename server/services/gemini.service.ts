@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /**
  * Service class for Google Gemini AI integrations
@@ -9,10 +9,11 @@ class GeminiService {
   private readonly MODEL_NAME = "gemini-1.5-pro-latest"; // Latest Gemini model that supports vision
 
   constructor() {
-    if (!process.env.GEMINI_API_KEY) {
-      console.warn("GEMINI_API_KEY not found in environment variables");
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is not set in environment variables");
     }
-    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+    this.genAI = new GoogleGenerativeAI(apiKey || "");
   }
 
   /**
@@ -22,91 +23,69 @@ class GeminiService {
    */
   async analyzePrescriptionImage(imageBase64: string): Promise<any> {
     try {
-      // Ensure the image is properly formatted for the API
-      // Remove the data URL prefix if present
-      const base64Data = imageBase64.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+      const model = this.genAI.getGenerativeModel({ model: this.MODEL_NAME });
 
-      // Set up the Gemini model with safety settings
-      const model = this.genAI.getGenerativeModel({
-        model: this.MODEL_NAME,
-        safetySettings: [
-          {
-            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-          },
-        ],
+      // Create prompt parts with the image
+      const promptParts = [
+        {
+          text: `You are a medical prescription analyzer. 
+          Analyze this prescription image and extract the following information:
+          - Doctor's name and credentials
+          - Hospital or clinic name (if present)
+          - Patient's name 
+          - Date of prescription
+          - Medications: List of medications with their
+            * Name
+            * Dosage
+            * Frequency
+            * Duration
+            * Special instructions
+          - Any additional notes or instructions
+          
+          Structure your response as a JSON object with these fields. For medications, create an array of medication objects.
+          If some information is not visible or unclear, indicate with "unclear" or null.
+          `
+        },
+        {
+          inlineData: {
+            mimeType: "image/jpeg",
+            data: imageBase64
+          }
+        }
+      ];
+
+      // Generate content from the model
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: promptParts }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+        }
       });
 
-      // Define the prompt for prescription analysis
-      const prompt = `
-        Analyze this prescription image thoroughly and extract all relevant medical information.
-        
-        Specifically identify and extract:
-        1. Patient information (name, age, ID if visible)
-        2. Doctor information (name, credentials, contact if visible)
-        3. Diagnosis or condition(s)
-        4. All prescribed medications with:
-           - Medication name (generic and brand if available)
-           - Dosage (strength and form)
-           - Route of administration
-           - Frequency/timing of doses
-           - Duration of treatment
-        5. Special instructions or warnings
-        6. Date of prescription
-        
-        Format your response ONLY as a JSON object with these fields. If information is not visible or unclear, indicate with null values.
-        Return only the JSON without any explanation or markdown.
-      `;
-
-      // Set up the parts for the image and text prompt
-      const imagePart = {
-        inlineData: {
-          data: base64Data,
-          mimeType: "image/jpeg",
-        },
-      };
-
-      // Create the chat and generate content
-      const result = await model.generateContent([prompt, imagePart]);
-      const response = await result.response;
-      const text = response.text();
-
-      // Extract JSON from the response (some Gemini responses might include text around the JSON)
-      let jsonContent;
+      const response = result.response;
+      const textResponse = response.text();
+      
+      // Try to parse the response as JSON
       try {
-        // Try to parse directly first
-        jsonContent = JSON.parse(text);
-      } catch (e) {
-        // If direct parsing fails, attempt to extract JSON using regex
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          jsonContent = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("Failed to parse JSON from Gemini response");
-        }
+        // Extract JSON from the response if it's wrapped in any markdown code blocks
+        const jsonPattern = /```(?:json)?\s*([\s\S]*?)\s*```|(\{[\s\S]*\})/;
+        const match = textResponse.match(jsonPattern);
+        const jsonStr = match ? (match[1] || match[2]) : textResponse;
+        
+        return JSON.parse(jsonStr);
+      } catch (error) {
+        console.error("Failed to parse JSON response from Gemini", error);
+        // Return the text response as a fallback
+        return { 
+          rawText: textResponse,
+          error: "Failed to parse structured data",
+          medications: []
+        };
       }
-
-      return jsonContent;
-    } catch (error: any) {
-      console.error("Gemini prescription analysis error:", error);
-      
-      if (error.message && error.message.includes("API key")) {
-        throw new Error("Invalid or missing Gemini API key. Please check your configuration.");
-      }
-      
-      throw new Error(`Failed to analyze prescription: ${error.message || "Unknown error"}`);
+    } catch (error) {
+      console.error("Error in Gemini prescription analysis:", error);
+      throw new Error(`Failed to analyze prescription: ${error.message}`);
     }
   }
 
@@ -116,14 +95,76 @@ class GeminiService {
    * @returns Validated medications with any warnings or corrections
    */
   async validateMedications(medications: any[]): Promise<any> {
-    // This is a placeholder for actual drug database validation
-    // In a production system, this would connect to a real drug database API
-    
-    return medications.map(med => ({
-      ...med,
-      validated: true,
-      warnings: [] // Would contain warnings about dosages, interactions, etc.
-    }));
+    try {
+      if (!medications || medications.length === 0) {
+        return [];
+      }
+
+      const model = this.genAI.getGenerativeModel({ model: this.MODEL_NAME });
+
+      const medicationNames = medications.map(med => med.name || "Unknown medication").join(", ");
+      
+      const promptParts = [
+        {
+          text: `You are a pharmacist validating a medication list.
+          For these medications: ${medicationNames}
+          
+          Please provide:
+          1. Verification if each appears to be a valid medication name
+          2. Standard dosage range for each
+          3. Potential drug interactions between any of these medications
+          4. Common side effects to be aware of
+          5. Any special warnings or precautions
+          
+          Structure your response as a JSON object with the medications as keys, and validation information as values.
+          Include interaction_warnings as a separate array if any exist between these medications.`
+        }
+      ];
+
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: promptParts }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 1024,
+        }
+      });
+
+      const response = result.response;
+      const textResponse = response.text();
+      
+      // Try to parse the response as JSON
+      try {
+        // Extract JSON from the response if it's wrapped in any markdown code blocks
+        const jsonPattern = /```(?:json)?\s*([\s\S]*?)\s*```|(\{[\s\S]*\})/;
+        const match = textResponse.match(jsonPattern);
+        const jsonStr = match ? (match[1] || match[2]) : textResponse;
+        
+        const validationData = JSON.parse(jsonStr);
+        
+        // Merge the validation data with the original medications
+        return medications.map(med => {
+          const name = med.name || "Unknown";
+          const validation = validationData[name] || {};
+          return {
+            ...med,
+            validated: true,
+            validationInfo: validation
+          };
+        });
+      } catch (error) {
+        console.error("Failed to parse JSON response from Gemini medication validation", error);
+        // Return the original medications with a validation error flag
+        return medications.map(med => ({
+          ...med,
+          validated: false,
+          validationError: "Failed to validate medication"
+        }));
+      }
+    } catch (error) {
+      console.error("Error in Gemini medication validation:", error);
+      // Return the original medications since validation failed
+      return medications;
+    }
   }
 
   /**
@@ -133,50 +174,62 @@ class GeminiService {
    */
   async analyzeSymptoms(symptoms: string[]): Promise<any> {
     try {
+      if (!symptoms || symptoms.length === 0) {
+        return { error: "No symptoms provided" };
+      }
+
       const model = this.genAI.getGenerativeModel({ model: this.MODEL_NAME });
       
-      const prompt = `
-        Based on the following symptoms, provide possible diagnoses with confidence levels:
-        ${symptoms.map(s => `- ${s}`).join('\n')}
-        
-        For each possible diagnosis:
-        1. Provide the medical condition name
-        2. Assign a confidence level (low, medium, high)
-        3. List which symptoms support this diagnosis
-        4. Provide recommendations for further testing if needed
-        
-        Format your response as a JSON object with an array of diagnoses. Each diagnosis should have:
-        - condition: string (name of condition)
-        - confidence: string (low, medium, high)
-        - matchingSymptoms: string[] (symptoms that match this condition)
-        - testingRecommendations: string[] (recommended tests)
-        
-        Return only the JSON without additional explanation.
-      `;
+      const symptomText = symptoms.join(", ");
       
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      // Extract JSON from the response
-      let jsonContent;
-      try {
-        // Try to parse directly first
-        jsonContent = JSON.parse(text);
-      } catch (e) {
-        // If direct parsing fails, attempt to extract JSON using regex
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          jsonContent = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("Failed to parse JSON from Gemini response");
+      const promptParts = [
+        {
+          text: `You are a medical diagnosis assistant. Based on the following symptoms:
+          ${symptomText}
+          
+          Please provide:
+          1. Possible diagnoses in order of likelihood
+          2. For each diagnosis, include a confidence estimate (low, medium, high)
+          3. Suggested follow-up questions that would help clarify the diagnosis
+          4. Whether the patient should seek immediate medical attention
+          
+          Structure your response as a JSON object.
+          
+          Be careful not to provide absolute diagnoses - these are suggestions that should be confirmed by a healthcare professional.
+          Include a clear disclaimer at the end of your response.`
         }
-      }
+      ];
+
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: promptParts }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1024,
+        }
+      });
+
+      const response = result.response;
+      const textResponse = response.text();
       
-      return jsonContent;
-    } catch (error: any) {
-      console.error("Symptom analysis error:", error);
-      throw new Error(`Failed to analyze symptoms: ${error.message || "Unknown error"}`);
+      // Try to parse the response as JSON
+      try {
+        // Extract JSON from the response if it's wrapped in any markdown code blocks
+        const jsonPattern = /```(?:json)?\s*([\s\S]*?)\s*```|(\{[\s\S]*\})/;
+        const match = textResponse.match(jsonPattern);
+        const jsonStr = match ? (match[1] || match[2]) : textResponse;
+        
+        return JSON.parse(jsonStr);
+      } catch (error) {
+        console.error("Failed to parse JSON response from Gemini symptom analysis", error);
+        // Return a structured error response
+        return { 
+          error: "Failed to analyze symptoms",
+          rawText: textResponse
+        };
+      }
+    } catch (error) {
+      console.error("Error in Gemini symptom analysis:", error);
+      throw new Error(`Failed to analyze symptoms: ${error.message}`);
     }
   }
 
@@ -187,51 +240,62 @@ class GeminiService {
    */
   async analyzeVitals(vitalsData: any[]): Promise<any> {
     try {
-      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-      
-      // Format the vitals data as a string for the prompt
-      const vitalsString = JSON.stringify(vitalsData);
-      
-      const prompt = `
-        Analyze the following patient vitals data over time:
-        ${vitalsString}
-        
-        Please provide:
-        1. Identified trends in each vital measurement
-        2. Potential health concerns based on these readings
-        3. Recommended actions for the healthcare provider
-        
-        Format your response as a JSON object with:
-        - trends: object with vital names as keys and trend descriptions as values
-        - concerns: array of potential health issues identified
-        - recommendations: array of recommended actions
-        
-        Return only the JSON without additional explanation.
-      `;
-      
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      // Extract JSON from the response
-      let jsonContent;
-      try {
-        // Try to parse directly first
-        jsonContent = JSON.parse(text);
-      } catch (e) {
-        // If direct parsing fails, attempt to extract JSON using regex
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          jsonContent = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("Failed to parse JSON from Gemini response");
-        }
+      if (!vitalsData || vitalsData.length === 0) {
+        return { error: "No vitals data provided" };
       }
+
+      const model = this.genAI.getGenerativeModel({ model: this.MODEL_NAME });
       
-      return jsonContent;
-    } catch (error: any) {
-      console.error("Vitals analysis error:", error);
-      throw new Error(`Failed to analyze vitals data: ${error.message || "Unknown error"}`);
+      // Format vitals data for the prompt
+      const formattedData = JSON.stringify(vitalsData, null, 2);
+      
+      const promptParts = [
+        {
+          text: `You are a medical vitals analyst. Based on the following patient vitals data:
+          ${formattedData}
+          
+          Please provide:
+          1. Analysis of trends for each vital sign
+          2. Identification of any readings outside normal ranges
+          3. Potential health concerns based on the data
+          4. Suggestions for improving or maintaining healthy readings
+          5. Recommendations for follow-up with healthcare providers if needed
+          
+          Structure your response as a JSON object with sections for each of the above categories.
+          Include a summary section with the most important findings.`
+        }
+      ];
+
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: promptParts }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 1024,
+        }
+      });
+
+      const response = result.response;
+      const textResponse = response.text();
+      
+      // Try to parse the response as JSON
+      try {
+        // Extract JSON from the response if it's wrapped in any markdown code blocks
+        const jsonPattern = /```(?:json)?\s*([\s\S]*?)\s*```|(\{[\s\S]*\})/;
+        const match = textResponse.match(jsonPattern);
+        const jsonStr = match ? (match[1] || match[2]) : textResponse;
+        
+        return JSON.parse(jsonStr);
+      } catch (error) {
+        console.error("Failed to parse JSON response from Gemini vitals analysis", error);
+        // Return a structured error response
+        return { 
+          error: "Failed to analyze vitals data",
+          rawText: textResponse
+        };
+      }
+    } catch (error) {
+      console.error("Error in Gemini vitals analysis:", error);
+      throw new Error(`Failed to analyze vitals data: ${error.message}`);
     }
   }
 }

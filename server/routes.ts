@@ -23,6 +23,7 @@ import { prescription as prescriptionService } from "./services/prescription.ser
 
 // Import route modules
 import vitalsRouter from "./routes/vitals";
+import { setupOcrPrescriptionRoutes } from "./routes/ocr-prescription";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -991,6 +992,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount vitals router for patient vitals data and AI analysis
   apiRouter.use('/patient-vitals', authenticate, vitalsRouter);
+  
+  // Setup OCR prescription routes directly on the app
+  setupOcrPrescriptionRoutes(app);
 
   // Apply error handling middleware
   apiRouter.use(handleErrors);
