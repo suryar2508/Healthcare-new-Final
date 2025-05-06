@@ -315,15 +315,123 @@ export default function PatientsPage() {
               
               <TabsContent value="health" className="mt-4">
                 {metricsLoading ? (
-                  <div className="text-center py-10">
-                    <p>Loading health data...</p>
+                  <div className="flex justify-center items-center py-10">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 ) : healthMetrics && healthMetrics.length > 0 ? (
                   <div className="space-y-6">
+                    <div className="bg-white p-4 rounded-lg border">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium text-lg">Health Metrics Summary</h4>
+                        <div className="text-xs text-gray-500">
+                          {healthMetrics.length} records found
+                        </div>
+                      </div>
+                      
+                      {/* Metrics Summary Cards */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        {/* Blood Pressure Card */}
+                        {healthMetrics.some((metric: any) => metric.metricType === 'blood_pressure') && (
+                          <div className="bg-blue-50 p-3 rounded-lg">
+                            <div className="text-xs text-blue-700 font-medium mb-1">Blood Pressure</div>
+                            {(() => {
+                              const latestBP = healthMetrics
+                                .filter((m: any) => m.metricType === 'blood_pressure')
+                                .sort((a: any, b: any) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())[0];
+                              
+                              return (
+                                <div className="flex flex-col">
+                                  <div className="text-xl font-medium">
+                                    {latestBP?.metricValue?.systolic}/{latestBP?.metricValue?.diastolic}
+                                    <span className="text-xs ml-1">mmHg</span>
+                                  </div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    {new Date(latestBP?.recordedAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Heart Rate Card */}
+                        {healthMetrics.some((metric: any) => metric.metricType === 'heart_rate') && (
+                          <div className="bg-red-50 p-3 rounded-lg">
+                            <div className="text-xs text-red-700 font-medium mb-1">Heart Rate</div>
+                            {(() => {
+                              const latestHR = healthMetrics
+                                .filter((m: any) => m.metricType === 'heart_rate')
+                                .sort((a: any, b: any) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())[0];
+                              
+                              return (
+                                <div className="flex flex-col">
+                                  <div className="text-xl font-medium">
+                                    {latestHR?.metricValue?.value}
+                                    <span className="text-xs ml-1">BPM</span>
+                                  </div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    {new Date(latestHR?.recordedAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Glucose Card */}
+                        {healthMetrics.some((metric: any) => metric.metricType === 'glucose') && (
+                          <div className="bg-purple-50 p-3 rounded-lg">
+                            <div className="text-xs text-purple-700 font-medium mb-1">Blood Glucose</div>
+                            {(() => {
+                              const latestGL = healthMetrics
+                                .filter((m: any) => m.metricType === 'glucose')
+                                .sort((a: any, b: any) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())[0];
+                              
+                              return (
+                                <div className="flex flex-col">
+                                  <div className="text-xl font-medium">
+                                    {latestGL?.metricValue?.value}
+                                    <span className="text-xs ml-1">mg/dL</span>
+                                  </div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    {new Date(latestGL?.recordedAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Weight Card */}
+                        {healthMetrics.some((metric: any) => metric.metricType === 'weight') && (
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <div className="text-xs text-green-700 font-medium mb-1">Weight</div>
+                            {(() => {
+                              const latestWT = healthMetrics
+                                .filter((m: any) => m.metricType === 'weight')
+                                .sort((a: any, b: any) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())[0];
+                              
+                              return (
+                                <div className="flex flex-col">
+                                  <div className="text-xl font-medium">
+                                    {latestWT?.metricValue?.value}
+                                    <span className="text-xs ml-1">kg</span>
+                                  </div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    {new Date(latestWT?.recordedAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
                     {/* Blood Pressure Chart */}
                     {healthMetrics.some((metric: any) => metric.metricType === 'blood_pressure') && (
-                      <div>
-                        <h4 className="font-medium mb-2">Blood Pressure History</h4>
+                      <div className="bg-white p-4 rounded-lg border">
+                        <h4 className="font-medium mb-4">Blood Pressure Trends</h4>
                         <ResponsiveContainer width="100%" height={200}>
                           <BarChart
                             data={formatBloodPressureData(healthMetrics)}
@@ -331,54 +439,83 @@ export default function PatientsPage() {
                           >
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
-                            <YAxis />
+                            <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
                             <Tooltip />
                             <Legend />
-                            <Bar dataKey="systolic" name="Systolic" fill="hsl(var(--primary))" />
-                            <Bar dataKey="diastolic" name="Diastolic" fill="hsl(var(--secondary))" />
+                            <Bar dataKey="systolic" name="Systolic" fill="#8884d8" />
+                            <Bar dataKey="diastolic" name="Diastolic" fill="#82ca9d" />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
                     )}
                     
                     {/* Recent Health Metrics Table */}
-                    <div>
-                      <h4 className="font-medium mb-2">Recent Health Metrics</h4>
-                      <div className="border rounded-md overflow-hidden">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {healthMetrics.slice(0, 10).map((metric: any) => (
-                              <tr key={metric.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 capitalize">
-                                  {metric.metricType.replace('_', ' ')}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {metric.metricType === 'blood_pressure' 
-                                    ? `${metric.metricValue.systolic}/${metric.metricValue.diastolic} mmHg`
-                                    : `${metric.metricValue.value} ${metric.metricValue.unit}`
-                                  }
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {new Date(metric.recordedAt).toLocaleString()}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                    <div className="bg-white p-4 rounded-lg border">
+                      <h4 className="font-medium mb-4">Health Metrics Timeline</h4>
+                      <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
+                        {healthMetrics
+                          .sort((a: any, b: any) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
+                          .map((metric: any, index: number) => {
+                            let metricDisplay = '';
+                            let metricIcon = '';
+                            let bgColor = '';
+                            
+                            switch(metric.metricType) {
+                              case 'blood_pressure':
+                                metricDisplay = `Blood Pressure: ${metric.metricValue.systolic}/${metric.metricValue.diastolic} mmHg`;
+                                metricIcon = 'favorite';
+                                bgColor = 'bg-blue-100';
+                                break;
+                              case 'heart_rate':
+                                metricDisplay = `Heart Rate: ${metric.metricValue.value} ${metric.metricValue.unit}`;
+                                metricIcon = 'monitor_heart';
+                                bgColor = 'bg-red-100';
+                                break;
+                              case 'glucose':
+                                metricDisplay = `Blood Glucose: ${metric.metricValue.value} ${metric.metricValue.unit}`;
+                                metricIcon = 'water_drop';
+                                bgColor = 'bg-purple-100';
+                                break;
+                              case 'weight':
+                                metricDisplay = `Weight: ${metric.metricValue.value} ${metric.metricValue.unit}`;
+                                metricIcon = 'monitor_weight';
+                                bgColor = 'bg-green-100';
+                                break;
+                              default:
+                                metricDisplay = `${metric.metricType}: ${JSON.stringify(metric.metricValue)}`;
+                                metricIcon = 'data_object';
+                                bgColor = 'bg-gray-100';
+                            }
+                            
+                            return (
+                              <div key={index} className="flex items-start space-x-3">
+                                <div className={`${bgColor} rounded-full p-2 mt-1`}>
+                                  <span className="material-icons text-sm">{metricIcon}</span>
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex justify-between">
+                                    <p className="text-sm font-medium">{metricDisplay}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {new Date(metric.recordedAt).toLocaleDateString()} {new Date(metric.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                  {metric.notes && (
+                                    <p className="text-xs text-gray-600 mt-1">{metric.notes}</p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-10">
-                    <span className="material-icons text-gray-400 text-4xl mb-2">favorite</span>
-                    <p className="text-gray-500">No health data recorded for this patient.</p>
+                  <div className="text-center py-10 bg-gray-50 rounded-lg border">
+                    <div className="inline-flex p-4 rounded-full bg-gray-100 mb-4">
+                      <span className="material-icons text-gray-400 text-xl">monitor_heart</span>
+                    </div>
+                    <p className="text-gray-700">No health metrics available for this patient.</p>
+                    <p className="text-xs text-gray-500 mt-2">Health data will appear here once recorded.</p>
                   </div>
                 )}
               </TabsContent>
