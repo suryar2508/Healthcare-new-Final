@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { format, addDays } from 'date-fns';
 
 import {
   Card,
@@ -23,7 +24,11 @@ import {
 } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Upload, FileImage, FileText, FilePlus2, FilePen, AlertCircle, CheckCircle, Ban, Undo2 } from "lucide-react";
+import { Loader2, Upload, FileImage, FileText, FilePlus2, FilePen, AlertCircle, CheckCircle, Ban, Undo2, BellRing, Clock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { 
   Table, 
   TableBody, 
@@ -45,6 +50,95 @@ export default function UploadPrescriptionPage() {
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [uploadId, setUploadId] = useState<number | null>(null);
   const [prescriptionCreated, setPrescriptionCreated] = useState<boolean>(false);
+  const [medicationSchedules, setMedicationSchedules] = useState<any[]>([]);
+  
+  // Initialize medication schedules when analysis results change
+  useEffect(() => {
+    if (analysisResults?.medications?.length) {
+      const initialSchedules = analysisResults.medications.map((med: any) => ({
+        medicationName: med.name || 'Unknown medication',
+        dosage: med.dosage || 'As directed',
+        dosageStrength: extractDosageStrength(med.dosage || ''),
+        frequency: mapToFrequency(med.frequency || 'once_daily'),
+        timing: 'no_food_restriction',
+        startDate: format(new Date(), 'yyyy-MM-dd'),
+        endDate: med.duration ? calculateEndDate(med.duration) : format(addDays(new Date(), 30), 'yyyy-MM-dd'),
+        timeOfDay: 'morning',
+        enableNotifications: true,
+        instructions: med.instructions || '',
+      }));
+      
+      setMedicationSchedules(initialSchedules);
+    }
+  }, [analysisResults]);
+  
+  // Extract dosage strength (e.g. "500mg" from "1 tablet of 500mg")
+  const extractDosageStrength = (dosage: string): string => {
+    const strengthMatch = dosage.match(/\d+\s*(?:mg|mcg|g|ml)/i);
+    return strengthMatch ? strengthMatch[0] : '';
+  };
+  
+  // Map text frequency to enum values
+  const mapToFrequency = (frequency: string): string => {
+    if (frequency.includes('twice') || frequency.includes('two times') || frequency.includes('2 times'))
+      return 'twice_daily';
+    if (frequency.includes('three times') || frequency.includes('3 times'))
+      return 'three_times_daily'; 
+    if (frequency.includes('four times') || frequency.includes('4 times'))
+      return 'four_times_daily';
+    if (frequency.toLowerCase().includes('as needed') || frequency.toLowerCase().includes('prn'))
+      return 'as_needed';
+    return 'once_daily'; // default
+  };
+  
+  // Calculate end date based on duration text
+  const calculateEndDate = (duration: string): string => {
+    const daysMatch = duration.match(/(\d+)\s*days?/i);
+    const weeksMatch = duration.match(/(\d+)\s*weeks?/i);
+    const monthsMatch = duration.match(/(\d+)\s*months?/i);
+    
+    let days = 0;
+    if (daysMatch) days += parseInt(daysMatch[1]);
+    if (weeksMatch) days += parseInt(weeksMatch[1]) * 7;
+    if (monthsMatch) days += parseInt(monthsMatch[1]) * 30;
+    
+    // Default to 30 days if no valid duration found
+    if (days === 0) days = 30;
+    
+    return format(addDays(new Date(), days), 'yyyy-MM-dd');
+  };
+  
+  // Update medication schedule settings
+  const updateMedicationSchedule = (index: number, field: string, value: any) => {
+    const updatedSchedules = [...medicationSchedules];
+    updatedSchedules[index] = {
+      ...updatedSchedules[index],
+      [field]: value
+    };
+    setMedicationSchedules(updatedSchedules);
+  };
+  
+  // Create medication schedules when prescription is created
+  const createMedicationScheduleMutation = useMutation({
+    mutationFn: async (scheduleData: any) => {
+      const res = await apiRequest('POST', '/api/medication-schedules', scheduleData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Medication Schedule Created',
+        description: 'Your medication schedule has been created with reminders',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/medication-schedules'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Schedule Creation Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  });
   
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,6 +327,158 @@ export default function UploadPrescriptionPage() {
     );
   };
   
+  // Render medication scheduling configuration
+  const renderMedicationScheduling = () => {
+    if (!medicationSchedules.length) {
+      return (
+        <div className="text-center py-8">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">No medications available for scheduling</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="space-y-6">
+        {medicationSchedules.map((schedule, index) => (
+          <div key={index} className="p-4 border rounded-lg space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium">{schedule.medicationName}</h4>
+              <Badge variant="outline">{schedule.dosageStrength || schedule.dosage}</Badge>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label htmlFor={`frequency-${index}`}>Frequency</Label>
+                  <Select 
+                    value={schedule.frequency} 
+                    onValueChange={(value) => updateMedicationSchedule(index, 'frequency', value)}
+                  >
+                    <SelectTrigger id={`frequency-${index}`}>
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="once_daily">Once Daily</SelectItem>
+                      <SelectItem value="twice_daily">Twice Daily</SelectItem>
+                      <SelectItem value="three_times_daily">Three Times Daily</SelectItem>
+                      <SelectItem value="four_times_daily">Four Times Daily</SelectItem>
+                      <SelectItem value="as_needed">As Needed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-1">
+                  <Label htmlFor={`timing-${index}`}>Timing</Label>
+                  <Select 
+                    value={schedule.timing} 
+                    onValueChange={(value) => updateMedicationSchedule(index, 'timing', value)}
+                  >
+                    <SelectTrigger id={`timing-${index}`}>
+                      <SelectValue placeholder="Select timing" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="before_food">Before Food</SelectItem>
+                      <SelectItem value="with_food">With Food</SelectItem>
+                      <SelectItem value="after_food">After Food</SelectItem>
+                      <SelectItem value="no_food_restriction">No Food Restriction</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-1">
+                  <Label>Time of Day</Label>
+                  <RadioGroup 
+                    value={schedule.timeOfDay} 
+                    onValueChange={(value) => updateMedicationSchedule(index, 'timeOfDay', value)}
+                    className="flex space-x-4 pt-1"
+                  >
+                    <div className="flex items-center space-x-1">
+                      <RadioGroupItem value="morning" id={`morning-${index}`} />
+                      <Label htmlFor={`morning-${index}`} className="cursor-pointer">Morning</Label>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <RadioGroupItem value="afternoon" id={`afternoon-${index}`} />
+                      <Label htmlFor={`afternoon-${index}`} className="cursor-pointer">Afternoon</Label>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <RadioGroupItem value="evening" id={`evening-${index}`} />
+                      <Label htmlFor={`evening-${index}`} className="cursor-pointer">Evening</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="grid gap-1">
+                    <Label htmlFor={`notifications-${index}`}>Notifications</Label>
+                    <span className="text-sm text-muted-foreground">Receive reminders for this medication</span>
+                  </div>
+                  <Switch
+                    id={`notifications-${index}`}
+                    checked={schedule.enableNotifications}
+                    onCheckedChange={(checked) => updateMedicationSchedule(index, 'enableNotifications', checked)}
+                  />
+                </div>
+                
+                {schedule.enableNotifications && (
+                  <div className="rounded-md p-3 bg-muted/30 space-y-1">
+                    <div className="flex items-center">
+                      <BellRing className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-sm font-medium">Reminder Settings</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      You'll receive notifications 15 minutes before your scheduled medication time.
+                    </p>
+                  </div>
+                )}
+                
+                <div className="grid gap-1">
+                  <Label>Duration</Label>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div>Start: {schedule.startDate}</div>
+                    <Clock className="h-3 w-3 mx-1" />
+                    <div>End: {schedule.endDate}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        <Button 
+          className="w-full" 
+          onClick={() => {
+            // Create medication schedules
+            if (user?.id && medicationSchedules.length > 0) {
+              const scheduleData = medicationSchedules.map(schedule => ({
+                ...schedule,
+                patientId: user.id,
+                prescriptionId: convertToPrescriptionMutation.data?.prescriptionId
+              }));
+              
+              createMedicationScheduleMutation.mutate(scheduleData);
+            }
+          }}
+          disabled={!prescriptionCreated || createMedicationScheduleMutation.isPending}
+        >
+          {createMedicationScheduleMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating Schedules...
+            </>
+          ) : (
+            <>
+              <BellRing className="mr-2 h-4 w-4" />
+              Create Medication Schedules
+            </>
+          )}
+        </Button>
+      </div>
+    );
+  };
+  
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -362,8 +608,9 @@ export default function UploadPrescriptionPage() {
             <CardContent>
               {analysisResults ? (
                 <Tabs defaultValue="medications">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="medications">Medications</TabsTrigger>
+                    <TabsTrigger value="schedule">Schedule</TabsTrigger>
                     <TabsTrigger value="doctor">Doctor Details</TabsTrigger>
                     <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
                   </TabsList>
@@ -377,6 +624,18 @@ export default function UploadPrescriptionPage() {
                         </Badge>
                       </div>
                       {renderMedications()}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="schedule" className="mt-4">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold">Medication Schedule</h3>
+                        <Badge variant="outline">
+                          Configure Reminders
+                        </Badge>
+                      </div>
+                      {renderMedicationScheduling()}
                     </div>
                   </TabsContent>
                   
