@@ -560,11 +560,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   apiRouter.post("/medication-schedules", authenticate, async (req, res, next) => {
     try {
-      const scheduleData = insertMedicationScheduleSchema.parse(req.body);
-      const schedule = await storage.insertMedicationSchedule(scheduleData);
+      // Check if the request body is an array of schedules or a single schedule
+      const isArray = Array.isArray(req.body);
       
-      res.status(201).json(schedule);
+      if (isArray) {
+        // Validate each schedule in the array
+        const schedulesData = [];
+        for (const scheduleItem of req.body) {
+          const validatedSchedule = insertMedicationScheduleSchema.parse(scheduleItem);
+          schedulesData.push(validatedSchedule);
+        }
+        
+        // Insert each schedule and collect results
+        const schedules = [];
+        for (const scheduleData of schedulesData) {
+          const schedule = await storage.insertMedicationSchedule(scheduleData);
+          schedules.push(schedule);
+          
+          // Create notification
+          if (schedule && scheduleData.enableNotifications) {
+            await notification.createMedicationReminder(
+              schedule.id,
+              schedule.patientId,
+              schedule.medicationName,
+              schedule.timing || 'no_food_restriction'
+            );
+          }
+        }
+        
+        res.status(201).json(schedules);
+      } else {
+        // Single schedule case (backward compatibility)
+        const scheduleData = insertMedicationScheduleSchema.parse(req.body);
+        const schedule = await storage.insertMedicationSchedule(scheduleData);
+        
+        // Create notification if enabled
+        if (schedule && scheduleData.enableNotifications) {
+          await notification.createMedicationReminder(
+            schedule.id,
+            schedule.patientId,
+            schedule.medicationName,
+            schedule.timing || 'no_food_restriction'
+          );
+        }
+        
+        res.status(201).json(schedule);
+      }
     } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({ 
+          error: "Invalid schedule data", 
+          details: error.errors 
+        });
+      }
       next(error);
     }
   });
