@@ -130,6 +130,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Create a debug route to fix admin password
+  apiRouter.get("/debug/fix-admin-password", async (req, res) => {
+    try {
+      // Import the hash function from auth.ts
+      const { createHash } = require('crypto');
+      const hashPassword = (password: string): string => {
+        return createHash('sha256').update(password).digest('hex');
+      };
+      
+      // Update admin password to properly hashed version
+      const [updatedAdmin] = await db.update(schema.users)
+        .set({ password: hashPassword("password123") })
+        .where(eq(schema.users.username, "admin"))
+        .returning();
+      
+      if (!updatedAdmin) {
+        return res.status(404).json({ message: "Admin user not found or could not be updated" });
+      }
+      
+      res.json({
+        id: updatedAdmin.id,
+        username: updatedAdmin.username,
+        role: updatedAdmin.role,
+        message: "Admin password has been properly hashed"
+      });
+    } catch (error) {
+      console.error("Error fixing admin password:", error);
+      res.status(500).json({ error: "Failed to fix admin password" });
+    }
+  });
+  
   app.use("/api", apiRouter);
 
   // Error handling middleware
