@@ -2,8 +2,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
+import { createHash } from "crypto";
 import { storage } from "./storage";
 import { userRoleEnum } from "@shared/schema";
 import connectPg from "connect-pg-simple";
@@ -33,37 +32,16 @@ type SafeUser = {
   role: typeof userRoleEnum.enumValues[number];
 };
 
-const scryptAsync = promisify(scrypt);
-
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+// Simple password hashing function using SHA-256
+function hashPassword(password: string): string {
+  return createHash('sha256').update(password).digest('hex');
 }
 
-async function comparePasswords(supplied: string, stored: string) {
-  try {
-    // Make sure the stored password has the correct format
-    if (!stored || !stored.includes('.')) {
-      console.error('Invalid stored password format');
-      return false;
-    }
-    
-    const [hashed, salt] = stored.split(".");
-    
-    // Validate both hashed part and salt exist
-    if (!hashed || !salt) {
-      console.error('Missing hash or salt in stored password');
-      return false;
-    }
-    
-    const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
-  } catch (error) {
-    console.error('Password comparison error:', error);
-    return false; // Return false on any error rather than crashing
-  }
+// Simple password comparison function
+function comparePasswords(supplied: string, stored: string): boolean {
+  if (!stored) return false;
+  const hashedSupplied = hashPassword(supplied);
+  return hashedSupplied === stored;
 }
 
 export function setupAuth(app: Express) {
@@ -92,7 +70,7 @@ export function setupAuth(app: Express) {
     new LocalStrategy(async (username, password, done) => {
       try {
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
+        if (!user || !comparePasswords(password, user.password)) {
           return done(null, false, { message: "Invalid username or password" });
         }
         const safeUser: SafeUser = {
@@ -148,7 +126,7 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      const hashedPassword = await hashPassword(password);
+      const hashedPassword = hashPassword(password);
       
       const user = await storage.insertUser({
         username,

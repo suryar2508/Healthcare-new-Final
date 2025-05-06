@@ -1,6 +1,12 @@
 import { db } from "./index";
 import * as schema from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { createHash } from "crypto";
+
+// Simple password hashing function using SHA-256 (same as in auth.ts)
+function hashPassword(password: string): string {
+  return createHash('sha256').update(password).digest('hex');
+}
 
 async function seed() {
   try {
@@ -15,7 +21,7 @@ async function seed() {
       // Create admin user
       const [adminUser] = await db.insert(schema.users).values({
         username: "admin",
-        password: "password123", // In a real app, this would be hashed
+        password: hashPassword("password123"),
         email: "admin@example.com",
         fullName: "System Administrator",
         role: "admin"
