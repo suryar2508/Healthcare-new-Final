@@ -2,8 +2,30 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    try {
+      const contentType = res.headers.get('content-type');
+      let errorMessage;
+      
+      if (contentType && contentType.includes('application/json')) {
+        const json = await res.json();
+        errorMessage = json.message || json.error || JSON.stringify(json);
+      } else {
+        const text = await res.text();
+        // Check if response is HTML and provide a more helpful error
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          errorMessage = 'Received HTML instead of JSON. This usually indicates a server error.';
+        } else {
+          errorMessage = text;
+        }
+      }
+      
+      throw new Error(`${res.status}: ${errorMessage}`);
+    } catch (parseError) {
+      if (parseError instanceof Error && parseError.message !== res.statusText) {
+        throw parseError;
+      }
+      throw new Error(`${res.status}: ${res.statusText}`);
+    }
   }
 }
 
@@ -29,16 +51,29 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
+    try {
+      const res = await fetch(queryKey[0] as string, {
+        credentials: "include",
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      
+      // Check if the response is valid JSON before parsing
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await res.json();
+      } else {
+        console.error('Expected JSON response but got:', contentType);
+        throw new Error('Server returned an invalid response format');
+      }
+    } catch (error) {
+      console.error('Query error:', error);
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({

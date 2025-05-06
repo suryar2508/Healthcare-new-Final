@@ -55,8 +55,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        // Check if the response is valid JSON before parsing
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return await res.json();
+        } else {
+          throw new Error('Server returned an invalid response. Please try again later.');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error('An unexpected error occurred during login');
+      }
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -66,9 +80,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Clean up error message for better user experience
+      let errorMessage = error.message;
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html')) {
+        errorMessage = 'Server error occurred. Please try again later.';
+      }
+      
       toast({
         title: "Login failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -76,8 +96,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", userData);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/register", userData);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          return await res.json();
+        } else {
+          throw new Error('Server returned an invalid response. Please try again later.');
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error('An unexpected error occurred during registration');
+      }
     },
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -87,9 +120,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Clean up error message for better user experience
+      let errorMessage = error.message;
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html')) {
+        errorMessage = 'Server error occurred. Please try again later.';
+      }
+      
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -97,7 +136,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      try {
+        await apiRequest("POST", "/api/logout");
+      } catch (error) {
+        console.error('Logout error:', error);
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error('An unexpected error occurred during logout');
+      }
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
@@ -107,9 +154,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Clean up error message for better user experience
+      let errorMessage = error.message;
+      if (errorMessage.includes('<!DOCTYPE') || errorMessage.includes('<html')) {
+        errorMessage = 'Server error occurred. Please try again later.';
+      }
+      
       toast({
         title: "Logout failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
