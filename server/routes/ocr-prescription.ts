@@ -1,8 +1,9 @@
 import type { Express, Request, Response } from "express";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
-import { ocrPrescriptionUploads } from "@shared/schema";
+import { ocrPrescriptionUploads, selectOcrPrescriptionUploadSchema } from "@shared/schema";
 import { geminiService } from "../services/gemini.service";
+import { z } from "zod";
 
 /**
  * Routes for OCR prescription uploads and analysis
@@ -32,11 +33,12 @@ export function setupOcrPrescriptionRoutes(app: Express) {
 
       // Save the OCR prescription upload to the database
       const [savedUpload] = await db.insert(ocrPrescriptionUploads).values({
-        patientId,
+        patientId: patientId,
         imageUrl: image, // We're storing the full base64 image here - in production you might want to save to cloud storage
-        notes: notes || null,
-        analysisResults: analysisResults,
         status: "completed",
+        extractedText: JSON.stringify(analysisResults),
+        confidenceScore: analysisResults.confidenceScore?.toString() || "0.85",
+        errorMessage: null,
         processedAt: new Date(),
       }).returning();
 
@@ -45,11 +47,11 @@ export function setupOcrPrescriptionRoutes(app: Express) {
         status: "success",
         analysisResults,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error processing prescription image:", error);
       return res.status(500).json({ 
         error: "Failed to process prescription image",
-        details: error.message 
+        details: error.message || String(error)
       });
     }
   });
@@ -72,9 +74,12 @@ export function setupOcrPrescriptionRoutes(app: Express) {
       }
 
       return res.status(200).json(upload);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching prescription upload:", error);
-      return res.status(500).json({ error: "Failed to fetch prescription" });
+      return res.status(500).json({ 
+        error: "Failed to fetch prescription",
+        details: error.message || String(error)
+      });
     }
   });
 
@@ -93,9 +98,12 @@ export function setupOcrPrescriptionRoutes(app: Express) {
       });
 
       return res.status(200).json(uploads);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching patient prescription uploads:", error);
-      return res.status(500).json({ error: "Failed to fetch prescriptions" });
+      return res.status(500).json({ 
+        error: "Failed to fetch prescriptions",
+        details: error.message || String(error)
+      });
     }
   });
 
@@ -117,9 +125,10 @@ export function setupOcrPrescriptionRoutes(app: Express) {
         return res.status(404).json({ error: "Prescription upload not found" });
       }
 
-      // 2. Validate the medications from the analysis
-      const analysisResults = upload.analysisResults;
-      const validatedMedications = await geminiService.validateMedications(analysisResults.medications || []);
+      // 2. Parse the extracted text and validate the medications from the analysis
+      const extractedText = upload.extractedText ? JSON.parse(upload.extractedText) : {};
+      const medications = extractedText.medications || [];
+      const validatedMedications = await geminiService.validateMedications(medications);
 
       // 3. Here you would create a prescription and prescription items in the database
       // This is a placeholder implementation
@@ -136,7 +145,7 @@ export function setupOcrPrescriptionRoutes(app: Express) {
       await db.update(ocrPrescriptionUploads)
         .set({ 
           status: "converted",
-          convertedAt: new Date()
+          processedAt: new Date()
         })
         .where(eq(ocrPrescriptionUploads.id, id));
 
@@ -144,9 +153,12 @@ export function setupOcrPrescriptionRoutes(app: Express) {
         status: "success",
         prescription
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error converting prescription:", error);
-      return res.status(500).json({ error: "Failed to convert prescription" });
+      return res.status(500).json({ 
+        error: "Failed to convert prescription",
+        details: error.message || String(error)
+      });
     }
   });
 }
