@@ -1,10 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/use-auth';
+import { Bell, Mail, Menu } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Link } from 'wouter';
 
 interface HeaderProps {
   toggleSidebar: () => void;
 }
 
 export default function Header({ toggleSidebar }: HeaderProps) {
+  const { user, logoutMutation } = useAuth();
+  
   // Fetch notifications
   const { data: notifications } = useQuery({
     queryKey: ['/api/notifications'],
@@ -14,41 +29,104 @@ export default function Header({ toggleSidebar }: HeaderProps) {
         unreadNotifications: 3,
         unreadMessages: 5
       });
-    }
+    },
+    enabled: !!user // Only run if user is logged in
   });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  // Get the dashboard path based on role
+  const getDashboardPath = () => {
+    if (!user) return "/";
+    
+    switch (user.role) {
+      case "admin": return "/admin";
+      case "doctor": return "/doctor";
+      case "patient": return "/patient";
+      case "pharmacist": return "/pharmacist";
+      default: return "/";
+    }
+  };
 
   return (
     <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6">
-      <button className="md:hidden text-gray-500" onClick={toggleSidebar}>
-        <span className="material-icons">menu</span>
-      </button>
-      
-      <div className="flex items-center space-x-4">
-        <button className="relative text-gray-500 hover:text-gray-700">
-          <span className="material-icons">notifications</span>
-          {notifications?.unreadNotifications > 0 && (
-            <span className="badge absolute -top-1 -right-1 bg-destructive text-white">
-              {notifications.unreadNotifications}
-            </span>
-          )}
-        </button>
+      <div className="flex items-center">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden mr-2" 
+          onClick={toggleSidebar}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
         
-        <button className="relative text-gray-500 hover:text-gray-700">
-          <span className="material-icons">mail</span>
-          {notifications?.unreadMessages > 0 && (
-            <span className="badge absolute -top-1 -right-1 bg-primary text-white">
-              {notifications.unreadMessages}
-            </span>
-          )}
-        </button>
-        
-        <div className="border-l pl-4 ml-2">
-          <button className="flex items-center text-sm text-gray-700">
-            <span className="font-medium mr-1">Dr. Sarah Johnson</span>
-            <span className="material-icons text-sm">arrow_drop_down</span>
-          </button>
-        </div>
+        <h1 className="text-xl font-semibold text-gray-800">
+          Healthcare System
+        </h1>
       </div>
+      
+      {user && (
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-5 w-5" />
+            {notifications?.unreadNotifications > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+              >
+                {notifications.unreadNotifications}
+              </Badge>
+            )}
+          </Button>
+          
+          <Button variant="ghost" size="icon" className="relative">
+            <Mail className="h-5 w-5" />
+            {notifications?.unreadMessages > 0 && (
+              <Badge 
+                variant="default" 
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+              >
+                {notifications.unreadMessages}
+              </Badge>
+            )}
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center px-2 gap-2">
+                <span className="font-medium">{user.fullName}</span>
+                <Badge variant="outline" className="ml-1">
+                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                </Badge>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href={getDashboardPath()}>
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="text-destructive focus:text-destructive" 
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+              >
+                {logoutMutation.isPending ? "Logging out..." : "Logout"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </header>
   );
 }

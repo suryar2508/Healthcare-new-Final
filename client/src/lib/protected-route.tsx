@@ -1,6 +1,8 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { Loader2, ShieldAlert, ArrowLeftCircle } from "lucide-react";
+import { Redirect, Route, Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 type ProtectedRouteProps = {
   path: string;
@@ -48,26 +50,52 @@ export function ProtectedRoute({
   if (allowedRoles && allowedRoles.length > 0) {
     if (!user.role || !allowedRoles.includes(user.role)) {
       console.log(`Access denied - user role ${user.role} not in allowed roles: ${allowedRoles.join(', ')}`);
+      
+      // Determine the correct redirect path based on user role
+      const redirectPath = (() => {
+        switch (user.role) {
+          case "admin": return "/admin";
+          case "doctor": return "/doctor";
+          case "patient": return "/patient";
+          case "pharmacist": return "/pharmacist";
+          default: return "/";
+        }
+      })();
+      
       return (
         <Route path={path}>
           {() => (
-            <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-              <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
-              <p className="text-muted-foreground">
-                You don't have permission to access this page.
-              </p>
-              <div className="mt-4">
-                <a 
-                  href="/" 
-                  className="text-sm text-primary hover:underline"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/';
-                  }}
-                >
-                  Return to Home
-                </a>
-              </div>
+            <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+              <Card className="max-w-md w-full shadow-lg">
+                <CardHeader className="border-b pb-3">
+                  <div className="flex items-center gap-3">
+                    <ShieldAlert className="h-8 w-8 text-destructive" />
+                    <CardTitle className="text-xl text-destructive">Access Denied</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6 pb-4">
+                  <div className="space-y-4">
+                    <p className="text-gray-700 dark:text-gray-300">
+                      You don't have permission to access this page.
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      Your current role is <strong>{user.role}</strong>, but this page requires one of these roles: <strong>{allowedRoles.join(', ')}</strong>.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-center border-t pt-4">
+                  <Button 
+                    variant="default"
+                    onClick={() => {
+                      window.location.href = redirectPath;
+                    }}
+                    className="gap-2"
+                  >
+                    <ArrowLeftCircle className="h-4 w-4" />
+                    Return to {user.role.charAt(0).toUpperCase() + user.role.slice(1)} Dashboard
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
           )}
         </Route>
