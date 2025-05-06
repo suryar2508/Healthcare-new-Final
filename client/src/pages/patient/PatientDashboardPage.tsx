@@ -42,7 +42,7 @@ export default function PatientDashboardPage() {
             <Bell className="h-4 w-4 mr-2" />
             Notifications
           </Button>
-          <Link href="/patient/appointments">
+          <Link href="/patient/book-appointment">
             <Button size="sm">
               <Calendar className="h-4 w-4 mr-2" />
               Book Appointment
@@ -137,7 +137,7 @@ export default function PatientDashboardPage() {
                   </div>
                 </div>
                 
-                <Link href="/patient/appointments">
+                <Link href="/patient/book-appointment">
                   <Button variant="link" className="mt-2 w-full">
                     <Plus className="h-4 w-4 mr-2" />
                     Book a new appointment
@@ -149,17 +149,19 @@ export default function PatientDashboardPage() {
           
           <h2 className="text-2xl font-semibold mt-8 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-4">
-            <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-md font-medium">Upload Prescription</CardTitle>
-                <Upload className="h-5 w-5 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Use OCR to extract medicine details
-                </p>
-              </CardContent>
-            </Card>
+            <Link href="/patient/upload-prescription">
+              <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-md font-medium">Upload Prescription</CardTitle>
+                  <Upload className="h-5 w-5 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Use OCR to extract medicine details
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
             
             <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">

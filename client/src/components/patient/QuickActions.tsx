@@ -131,7 +131,7 @@ export default function QuickActions() {
           {/* Track Health */}
           <Link href="/patient/health-tracking">
             <Button variant="outline" className="h-24 w-full flex flex-col gap-1 items-center justify-center">
-              <HeartPulse className="h-5 w-5 text-primary" />
+              <Heart className="h-5 w-5 text-primary" />
               <span className="text-xs font-medium">Track Health</span>
             </Button>
           </Link>

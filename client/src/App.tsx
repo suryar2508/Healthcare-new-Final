@@ -26,6 +26,8 @@ import PatientDashboardPage from "@/pages/patient/PatientDashboardPage";
 import PatientAppointmentsPage from "@/pages/patient/PatientAppointmentsPage";
 import MedicationsPage from "@/pages/patient/MedicationsPage";
 import HealthMetricsPage from "@/pages/patient/HealthMetricsPage";
+import AppointmentBookingPage from "@/pages/patient/AppointmentBookingPage";
+import UploadPrescriptionPage from "@/pages/patient/UploadPrescriptionPage";
 
 // Pharmacist pages
 import PharmacistDashboardPage from "@/pages/pharmacist/PharmacistDashboardPage";
@@ -125,6 +127,16 @@ function Router() {
       <ProtectedRoute 
         path="/patient/health-metrics" 
         component={HealthMetricsPage} 
+        allowedRoles={["patient"]} 
+      />
+      <ProtectedRoute 
+        path="/patient/book-appointment" 
+        component={AppointmentBookingPage} 
+        allowedRoles={["patient"]} 
+      />
+      <ProtectedRoute 
+        path="/patient/upload-prescription" 
+        component={UploadPrescriptionPage} 
         allowedRoles={["patient"]} 
       />
       
