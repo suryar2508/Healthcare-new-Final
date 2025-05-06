@@ -103,8 +103,7 @@ vitalsRouter.post("/record", async (req, res, next) => {
     const newVital = await db.insert(schema.healthMetrics).values({
       patientId: Number(patientId),
       metricType: metric,
-      value: String(value),
-      unit: unit || '',
+      metricValue: { value: Number(value), unit: unit || '' },
       notes: notes || null,
       recordedAt: new Date()
     }).returning();
