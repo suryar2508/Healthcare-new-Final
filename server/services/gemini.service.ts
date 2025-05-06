@@ -12,8 +12,16 @@ class GeminiService {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is not set in environment variables");
+      throw new Error("Missing GEMINI_API_KEY environment variable. AI features will not work without a valid API key.");
     }
-    this.genAI = new GoogleGenerativeAI(apiKey || "");
+    
+    try {
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      console.log("Gemini AI service initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize Gemini AI service:", error);
+      throw new Error("Failed to initialize AI service. Please check your API key and try again.");
+    }
   }
 
   /**
@@ -221,9 +229,16 @@ class GeminiService {
   async analyzeSymptoms(symptoms: string[]): Promise<any> {
     try {
       if (!symptoms || symptoms.length === 0) {
-        return { error: "No symptoms provided" };
+        return { 
+          error: "No symptoms provided",
+          possibleDiagnoses: [],
+          followUpQuestions: [],
+          immediateAttention: false,
+          disclaimer: "Please provide symptoms for analysis."
+        };
       }
 
+      console.log(`Analyzing symptoms: ${symptoms.join(", ")}`);
       const model = this.genAI.getGenerativeModel({ model: this.MODEL_NAME });
       
       const symptomText = symptoms.join(", ");
@@ -233,16 +248,28 @@ class GeminiService {
           text: `You are a medical diagnosis assistant. Based on the following symptoms:
           ${symptomText}
           
-          Please provide:
-          1. Possible diagnoses in order of likelihood
-          2. For each diagnosis, include a confidence estimate (low, medium, high)
-          3. Suggested follow-up questions that would help clarify the diagnosis
-          4. Whether the patient should seek immediate medical attention
+          Respond with a JSON object with the following structure:
+          {
+            "possibleDiagnoses": [
+              {
+                "condition": "string", 
+                "confidence": "low|medium|high",
+                "description": "string"
+              }
+            ],
+            "followUpQuestions": ["string"],
+            "immediateAttention": boolean,
+            "disclaimer": "string"
+          }
           
-          Structure your response as a JSON object.
+          Follow these rules:
+          1. Provide 3-5 possible diagnoses in order of likelihood
+          2. For each diagnosis, include a confidence level as "low", "medium", or "high"
+          3. Include 3-5 follow-up questions that would help clarify the diagnosis
+          4. Set immediateAttention to true if symptoms suggest the patient should seek immediate care
+          5. Include a clear medical disclaimer
           
-          Be careful not to provide absolute diagnoses - these are suggestions that should be confirmed by a healthcare professional.
-          Include a clear disclaimer at the end of your response.`
+          Return ONLY valid JSON with no additional text, explanation, or markdown.`
         }
       ];
 
@@ -250,12 +277,13 @@ class GeminiService {
         contents: [{ role: "user", parts: promptParts }],
         generationConfig: {
           temperature: 0.2,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 1024
         }
       });
 
       const response = result.response;
       const textResponse = response.text();
+      console.log("Raw response from Gemini:", textResponse.substring(0, 100) + "...");
       
       // Try to parse the response as JSON
       try {
@@ -264,19 +292,50 @@ class GeminiService {
         const match = textResponse.match(jsonPattern);
         const jsonStr = match ? (match[1] || match[2]) : textResponse;
         
-        return JSON.parse(jsonStr);
+        const parsedResponse = JSON.parse(jsonStr);
+        console.log("Successfully parsed symptom analysis response");
+        
+        // Ensure we have the expected structure, with defaults for missing properties
+        return {
+          possibleDiagnoses: parsedResponse.possibleDiagnoses || [],
+          followUpQuestions: parsedResponse.followUpQuestions || [],
+          immediateAttention: !!parsedResponse.immediateAttention,
+          disclaimer: parsedResponse.disclaimer || "These are potential diagnoses only. Please consult with a healthcare professional for an accurate diagnosis.",
+          ...parsedResponse
+        };
       } catch (error) {
-        console.error("Failed to parse JSON response from Gemini symptom analysis", error);
-        // Return a structured error response
+        console.error("Failed to parse JSON response from Gemini symptom analysis:", error);
+        console.error("Raw response:", textResponse);
+        
+        // Return a structured error response with default values
         return { 
           error: "Failed to analyze symptoms",
+          errorDetails: error instanceof Error ? error.message : String(error),
+          possibleDiagnoses: [
+            { 
+              condition: "Analysis unavailable", 
+              confidence: "low",
+              description: "The symptom analysis could not be completed."
+            }
+          ],
+          followUpQuestions: ["Please consult with a healthcare professional."],
+          immediateAttention: false,
+          disclaimer: "Please consult with a healthcare professional for proper diagnosis.",
           rawText: textResponse
         };
       }
     } catch (error) {
       console.error("Error in Gemini symptom analysis:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to analyze symptoms: ${errorMessage}`);
+      
+      // Return a structured error response instead of throwing
+      return {
+        error: `Failed to analyze symptoms: ${errorMessage}`,
+        possibleDiagnoses: [],
+        followUpQuestions: [],
+        immediateAttention: false,
+        disclaimer: "An error occurred during analysis. Please try again later or consult with a healthcare professional."
+      };
     }
   }
 
@@ -288,28 +347,67 @@ class GeminiService {
   async analyzeVitals(vitalsData: any[]): Promise<any> {
     try {
       if (!vitalsData || vitalsData.length === 0) {
-        return { error: "No vitals data provided" };
+        return { 
+          error: "No vitals data provided",
+          trends: {},
+          abnormalReadings: [],
+          healthConcerns: [],
+          recommendations: [],
+          followUpRecommendations: [],
+          summary: "No vitals data provided for analysis"
+        };
       }
 
+      console.log(`Analyzing vitals data for ${vitalsData.length} readings`);
       const model = this.genAI.getGenerativeModel({ model: this.MODEL_NAME });
       
-      // Format vitals data for the prompt
-      const formattedData = JSON.stringify(vitalsData, null, 2);
+      // Format vitals data for the prompt, but limit size if too large
+      const safeVitalsData = vitalsData.slice(0, 20); // Limit to 20 readings to avoid token limits
+      const formattedData = JSON.stringify(safeVitalsData, null, 2);
       
       const promptParts = [
         {
           text: `You are a medical vitals analyst. Based on the following patient vitals data:
           ${formattedData}
           
-          Please provide:
-          1. Analysis of trends for each vital sign
-          2. Identification of any readings outside normal ranges
-          3. Potential health concerns based on the data
-          4. Suggestions for improving or maintaining healthy readings
-          5. Recommendations for follow-up with healthcare providers if needed
+          Respond with a JSON object with the following structure:
+          {
+            "trends": {
+              "bloodPressure": "string",
+              "heartRate": "string",
+              "temperature": "string",
+              "bloodGlucose": "string",
+              "weight": "string"
+            },
+            "abnormalReadings": [
+              {
+                "metric": "string",
+                "value": "string",
+                "normalRange": "string",
+                "severity": "low|medium|high"
+              }
+            ],
+            "healthConcerns": [
+              {
+                "issue": "string",
+                "description": "string",
+                "urgency": "low|medium|high"
+              }
+            ],
+            "recommendations": ["string"],
+            "followUpRecommendations": ["string"],
+            "summary": "string"
+          }
           
-          Structure your response as a JSON object with sections for each of the above categories.
-          Include a summary section with the most important findings.`
+          Follow these rules:
+          1. For trends, analyze whether each vital sign is improving, worsening, stable, or fluctuating
+          2. For abnormal readings, identify any values outside clinical normal ranges
+          3. For health concerns, note potential issues indicated by the data
+          4. Include specific lifestyle recommendations to improve readings
+          5. Include recommendations for medical follow-up if necessary
+          6. Provide a concise summary of the most important findings
+          
+          Return ONLY valid JSON with no additional text, explanation, or markdown.`
         }
       ];
 
@@ -317,12 +415,13 @@ class GeminiService {
         contents: [{ role: "user", parts: promptParts }],
         generationConfig: {
           temperature: 0.1,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 1024
         }
       });
 
       const response = result.response;
       const textResponse = response.text();
+      console.log("Raw response from Gemini (vitals):", textResponse.substring(0, 100) + "...");
       
       // Try to parse the response as JSON
       try {
@@ -331,19 +430,56 @@ class GeminiService {
         const match = textResponse.match(jsonPattern);
         const jsonStr = match ? (match[1] || match[2]) : textResponse;
         
-        return JSON.parse(jsonStr);
+        const parsedResponse = JSON.parse(jsonStr);
+        console.log("Successfully parsed vitals analysis response");
+        
+        // Ensure we have the expected structure with defaults for missing properties
+        return {
+          trends: parsedResponse.trends || {},
+          abnormalReadings: parsedResponse.abnormalReadings || [],
+          healthConcerns: parsedResponse.healthConcerns || [],
+          recommendations: parsedResponse.recommendations || [],
+          followUpRecommendations: parsedResponse.followUpRecommendations || [],
+          summary: parsedResponse.summary || "Analysis complete, but no concise summary available.",
+          ...parsedResponse
+        };
       } catch (error) {
-        console.error("Failed to parse JSON response from Gemini vitals analysis", error);
-        // Return a structured error response
+        console.error("Failed to parse JSON response from Gemini vitals analysis:", error);
+        console.error("Raw response:", textResponse);
+        
+        // Return a structured error response with default values
         return { 
           error: "Failed to analyze vitals data",
+          errorDetails: error instanceof Error ? error.message : String(error),
+          trends: {},
+          abnormalReadings: [],
+          healthConcerns: [
+            { 
+              issue: "Analysis unavailable", 
+              description: "The vitals analysis could not be completed.", 
+              urgency: "low" 
+            }
+          ],
+          recommendations: ["Please consult with a healthcare professional for interpretation of your vitals data."],
+          followUpRecommendations: ["Schedule a check-up with your doctor to review your health metrics."],
+          summary: "Unable to analyze health metrics data. Please consult a healthcare professional.",
           rawText: textResponse
         };
       }
     } catch (error) {
       console.error("Error in Gemini vitals analysis:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to analyze vitals data: ${errorMessage}`);
+      
+      // Return a structured error response instead of throwing
+      return {
+        error: `Failed to analyze vitals data: ${errorMessage}`,
+        trends: {},
+        abnormalReadings: [],
+        healthConcerns: [],
+        recommendations: [],
+        followUpRecommendations: [],
+        summary: "An error occurred during analysis. Please try again later or consult with a healthcare professional."
+      };
     }
   }
 }
