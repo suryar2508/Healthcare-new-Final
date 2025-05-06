@@ -32,21 +32,21 @@ async function seed() {
       const doctorUsers = [
         {
           username: "dr.johnson",
-          password: "password123",
+          password: hashPassword("password123"),
           email: "dr.johnson@example.com",
           fullName: "Dr. Sarah Johnson",
           role: "doctor"
         },
         {
           username: "dr.chen",
-          password: "password123",
+          password: hashPassword("password123"),
           email: "dr.chen@example.com",
           fullName: "Dr. Michael Chen",
           role: "doctor"
         },
         {
           username: "dr.rodriguez",
-          password: "password123",
+          password: hashPassword("password123"),
           email: "dr.rodriguez@example.com",
           fullName: "Dr. Emily Rodriguez",
           role: "doctor"
@@ -74,35 +74,35 @@ async function seed() {
       const patientUsers = [
         {
           username: "john.doe",
-          password: "password123",
+          password: hashPassword("password123"),
           email: "john.doe@example.com",
           fullName: "John Doe",
           role: "patient"
         },
         {
           username: "jane.smith",
-          password: "password123",
+          password: hashPassword("password123"),
           email: "jane.smith@example.com",
           fullName: "Jane Smith",
           role: "patient"
         },
         {
           username: "robert.johnson",
-          password: "password123",
+          password: hashPassword("password123"),
           email: "robert.johnson@example.com",
           fullName: "Robert Johnson",
           role: "patient"
         },
         {
           username: "emily.brown",
-          password: "password123",
+          password: hashPassword("password123"),
           email: "emily.brown@example.com",
           fullName: "Emily Brown",
           role: "patient"
         },
         {
           username: "mark.wilson",
-          password: "password123",
+          password: hashPassword("password123"),
           email: "mark.wilson@example.com",
           fullName: "Mark Wilson",
           role: "patient"
