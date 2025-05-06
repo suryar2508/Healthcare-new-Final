@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AppLayout from "@/components/layout/AppLayout";
 import AuthPage from "@/pages/auth-page";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 // Admin pages
@@ -38,9 +38,23 @@ function Router() {
       {/* Auth route */}
       <Route path="/auth" component={AuthPage} />
 
-      {/* Home route - redirects based on auth status */}
+      {/* Home route - redirects based on auth status and role */}
       <Route path="/">
-        {() => <Redirect to="/auth" />}
+        {() => {
+          const { user } = useAuth();
+          if (!user) {
+            return <Redirect to="/auth" />;
+          }
+          
+          // Redirect based on user role
+          switch (user.role) {
+            case "admin": return <Redirect to="/admin" />;
+            case "doctor": return <Redirect to="/doctor" />;
+            case "patient": return <Redirect to="/patient" />;
+            case "pharmacist": return <Redirect to="/pharmacist" />;
+            default: return <Redirect to="/auth" />;
+          }
+        }}
       </Route>
 
       {/* Admin routes */}

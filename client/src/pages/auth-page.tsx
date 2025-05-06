@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,10 +39,25 @@ export default function AuthPage() {
   const [, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
 
-  // Redirect if already logged in
-  if (user) {
-    navigate("/");
-    return null;
+  // Use useEffect for navigation to avoid render-time redirects
+  // which cause the "Maximum update depth exceeded" error
+  React.useEffect(() => {
+    // Redirect if already logged in
+    if (user) {
+      const redirectPath = getRedirectPathForRole(user.role);
+      navigate(redirectPath);
+    }
+  }, [user, navigate]);
+  
+  // Helper function to redirect users based on their role
+  function getRedirectPathForRole(role: string): string {
+    switch (role) {
+      case "admin": return "/admin";
+      case "doctor": return "/doctor";
+      case "patient": return "/patient";
+      case "pharmacist": return "/pharmacist";
+      default: return "/";
+    }
   }
 
   // Login form
