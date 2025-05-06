@@ -44,6 +44,7 @@ export default function UploadPrescriptionPage() {
   const [notes, setNotes] = useState<string>('');
   const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [uploadId, setUploadId] = useState<number | null>(null);
+  const [prescriptionCreated, setPrescriptionCreated] = useState<boolean>(false);
   
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,13 +133,22 @@ export default function UploadPrescriptionPage() {
       return await res.json();
     },
     onSuccess: (data) => {
+      setPrescriptionCreated(true);
+      
       toast({
         title: 'Prescription Created',
         description: 'Your prescription has been created and sent to the pharmacy',
       });
       
-      // Navigate to prescriptions page
-      navigate('/patient/prescriptions');
+      // Store the prescription ID for billing if needed
+      if (data && data.prescriptionId) {
+        console.log('Created prescription with ID:', data.prescriptionId);
+      } else {
+        console.warn('No prescription ID returned from conversion');
+      }
+      
+      // Don't navigate away immediately so user can generate bill
+      // navigate('/patient/prescriptions');
     },
     onError: (error: Error) => {
       toast({
@@ -185,6 +195,7 @@ export default function UploadPrescriptionPage() {
     setNotes('');
     setAnalysisResults(null);
     setUploadId(null);
+    setPrescriptionCreated(false);
   };
   
   // Render medications from analysis results
@@ -435,42 +446,65 @@ export default function UploadPrescriptionPage() {
               )}
             </CardContent>
             <CardFooter className="flex flex-col space-y-3">
-              <Button 
-                className="w-full" 
-                disabled={!analysisResults || convertToPrescriptionMutation.isPending}
-                onClick={() => convertToPrescriptionMutation.mutate()}
-              >
-                {convertToPrescriptionMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <FilePlus2 className="mr-2 h-4 w-4" />
-                    Convert to Prescription
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                disabled={!analysisResults || generateBillMutation.isPending}
-                onClick={() => generateBillMutation.mutate()}
-              >
-                {generateBillMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <FilePen className="mr-2 h-4 w-4" />
-                    Generate Bill
-                  </>
-                )}
-              </Button>
+              {prescriptionCreated ? (
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-900 space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <p className="font-medium text-green-700 dark:text-green-300">Prescription Created Successfully</p>
+                  </div>
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    Your prescription has been created and sent to the pharmacy.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    disabled={!convertToPrescriptionMutation.data?.prescriptionId || generateBillMutation.isPending}
+                    onClick={() => {
+                      if (convertToPrescriptionMutation.data?.prescriptionId) {
+                        generateBillMutation.mutate(convertToPrescriptionMutation.data.prescriptionId);
+                      }
+                    }}
+                  >
+                    {generateBillMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FilePen className="mr-2 h-4 w-4" />
+                        Generate Bill
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full" 
+                    onClick={handleReset}
+                  >
+                    <Undo2 className="mr-2 h-4 w-4" />
+                    Upload New Prescription
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  className="w-full" 
+                  disabled={!analysisResults || convertToPrescriptionMutation.isPending}
+                  onClick={() => convertToPrescriptionMutation.mutate()}
+                >
+                  {convertToPrescriptionMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FilePlus2 className="mr-2 h-4 w-4" />
+                      Convert to Prescription
+                    </>
+                  )}
+                </Button>
+              )}
             </CardFooter>
           </Card>
           
