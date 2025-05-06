@@ -28,6 +28,7 @@ import MedicationsPage from "@/pages/patient/MedicationsPage";
 import HealthMetricsPage from "@/pages/patient/HealthMetricsPage";
 import AppointmentBookingPage from "@/pages/patient/AppointmentBookingPage";
 import UploadPrescriptionPage from "@/pages/patient/UploadPrescriptionPage";
+import PatientTestPage from "@/pages/patient/PatientTestPage";
 
 // Pharmacist pages
 import PharmacistDashboardPage from "@/pages/pharmacist/PharmacistDashboardPage";
@@ -56,6 +57,22 @@ function Router() {
             case "pharmacist": return <Redirect to="/pharmacist" />;
             default: return <Redirect to="/auth" />;
           }
+        }}
+      </Route>
+
+      {/* Special test route with no role restrictions */}
+      <Route path="/patient-test">
+        {() => {
+          const { user } = useAuth();
+          // Only require authentication, not specific role
+          if (!user) {
+            return <Redirect to="/auth" />;
+          }
+          return (
+            <AppLayout>
+              <PatientTestPage />
+            </AppLayout>
+          );
         }}
       </Route>
 

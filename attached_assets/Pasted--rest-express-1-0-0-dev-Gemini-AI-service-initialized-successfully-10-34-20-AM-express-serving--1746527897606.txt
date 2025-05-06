@@ -1,0 +1,840 @@
+> rest-express@1.0.0 dev
+Gemini AI service initialized successfully
+10:34:20 AM [express] serving on port 5000
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+10:35:13 AM [express] GET /api/patients 304 in 134ms :: [{"id":1,"userId":5,"dateOfBirth":"2000-05-06…
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+10:36:04 AM [express] GET /api/patients 304 in 155ms :: [{"id":1,"userId":5,"dateOfBirth":"2000-05-06…
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+10:36:23 AM [express] GET /api/patients 304 in 124ms :: [{"id":1,"userId":5,"dateOfBirth":"2000-05-06…
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+10:36:36 AM [express] GET /api/patients 304 in 131ms :: [{"id":1,"userId":5,"dateOfBirth":"2000-05-06…
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+Successfully deserialized user: dr.johnson, role: doctor
+Deserializing user with ID: 2
+Successfully deserialized user: dr.johnson, role: doctor
+10:36:58 AM [express] GET /api/patients 304 in 133ms :: [{"id":1,"userId":5,"dateOfBirth":"2000-05-06…
