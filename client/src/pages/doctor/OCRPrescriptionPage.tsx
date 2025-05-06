@@ -1,14 +1,17 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Camera, FileUp, Loader2, RefreshCcw } from "lucide-react";
+import { Camera, FileUp, Loader2, RefreshCcw, ClipboardList, Check, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function OCRPrescriptionPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -32,10 +35,17 @@ export default function OCRPrescriptionPage() {
     onSuccess: (data) => {
       toast({
         title: "Upload successful",
-        description: "Prescription image has been uploaded and queued for OCR analysis",
+        description: data.analysisResults 
+          ? "Prescription analyzed successfully with AI" 
+          : "Prescription uploaded and queued for analysis",
       });
       setAnalysisId(data.id);
       setActiveTab("results");
+      
+      // If we have results immediately, fetch them
+      if (data.analysisResults) {
+        analysisMutation.mutate(data.id);
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -57,7 +67,9 @@ export default function OCRPrescriptionPage() {
         title: "Analysis retrieved",
         description: data.status === "completed" 
           ? "OCR analysis is complete" 
-          : "OCR analysis is still in progress",
+          : data.status === "failed"
+          ? "Analysis failed. Please try again."
+          : "Analysis is still in progress",
       });
     },
     onError: (error: Error) => {
@@ -68,6 +80,39 @@ export default function OCRPrescriptionPage() {
       });
     },
   });
+  
+  // Mutation for converting OCR result to prescription
+  const convertMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/ocr-prescription/convert/${id}`);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Conversion successful",
+        description: "OCR analysis has been converted to a prescription",
+      });
+      
+      // Refresh analysis data to show conversion status
+      if (analysisId) {
+        analysisMutation.mutate(analysisId);
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Conversion failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Fetch analysis if ID is available
+  useEffect(() => {
+    if (analysisId && activeTab === "results" && !analysisMutation.data) {
+      analysisMutation.mutate(analysisId);
+    }
+  }, [analysisId, activeTab]);
 
   // Handle file selection for upload
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,6 +225,13 @@ export default function OCRPrescriptionPage() {
       analysisMutation.mutate(analysisId);
     }
   };
+  
+  // Handle conversion to prescription
+  const handleConvertToPrescription = () => {
+    if (analysisId) {
+      convertMutation.mutate(analysisId);
+    }
+  };
 
   // Mock patient data - in a real app, this would come from an API call
   const patients = [
@@ -187,6 +239,136 @@ export default function OCRPrescriptionPage() {
     { id: "2", name: "Jane Smith" },
     { id: "3", name: "Robert Johnson" },
   ];
+
+  // Format the analysis results for better display
+  const renderAnalysisResults = () => {
+    if (!analysisMutation.data?.analysisResults) return null;
+    
+    const results = analysisMutation.data.analysisResults;
+    
+    return (
+      <div className="space-y-6">
+        {/* Patient and Prescription Info */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Patient Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-2">
+                <div>
+                  <dt className="text-sm font-medium text-muted-foreground">Name</dt>
+                  <dd>{results.patient?.name || "Not found in prescription"}</dd>
+                </div>
+                {results.patient?.age && (
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Age</dt>
+                    <dd>{results.patient.age}</dd>
+                  </div>
+                )}
+                {results.patient?.id && (
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Patient ID</dt>
+                    <dd>{results.patient.id}</dd>
+                  </div>
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Prescription Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-2">
+                {results.doctor && (
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Doctor</dt>
+                    <dd>{results.doctor.name || "Unknown"}</dd>
+                    {results.doctor.credentials && <dd className="text-sm text-muted-foreground">{results.doctor.credentials}</dd>}
+                  </div>
+                )}
+                {results.date && (
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Date</dt>
+                    <dd>{results.date}</dd>
+                  </div>
+                )}
+                {results.diagnosis && (
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Diagnosis</dt>
+                    <dd>{results.diagnosis}</dd>
+                  </div>
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Medications Table */}
+        <div>
+          <h3 className="text-lg font-medium mb-2">Medications</h3>
+          {results.medications && results.medications.length > 0 ? (
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Medication</TableHead>
+                    <TableHead>Dosage</TableHead>
+                    <TableHead>Frequency</TableHead>
+                    <TableHead>Duration</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {results.medications.map((med: any, idx: number) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">{med.name}</TableCell>
+                      <TableCell>{med.dosage || "As directed"}</TableCell>
+                      <TableCell>{med.frequency || "As needed"}</TableCell>
+                      <TableCell>{med.duration || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>No medications found</AlertTitle>
+              <AlertDescription>
+                The AI couldn't identify any medications in this prescription.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+        
+        {/* Special Instructions */}
+        {results.instructions && (
+          <div>
+            <h3 className="text-lg font-medium mb-2">Special Instructions</h3>
+            <Alert>
+              <AlertTitle>Instructions</AlertTitle>
+              <AlertDescription>
+                {results.instructions}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
+        {/* Raw JSON for debugging */}
+        <div className="mt-6">
+          <Separator className="my-4" />
+          <details>
+            <summary className="cursor-pointer text-sm text-muted-foreground">View raw analysis data</summary>
+            <pre className="text-xs whitespace-pre-wrap mt-2 p-4 bg-muted rounded-md overflow-auto max-h-96">
+              {JSON.stringify(results, null, 2)}
+            </pre>
+          </details>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -203,7 +385,7 @@ export default function OCRPrescriptionPage() {
             <CardHeader>
               <CardTitle>Upload Prescription Image</CardTitle>
               <CardDescription>
-                Upload a clear image of a prescription for automated OCR analysis
+                Upload a clear image of a prescription for automated AI analysis
               </CardDescription>
             </CardHeader>
             
@@ -302,9 +484,9 @@ export default function OCRPrescriptionPage() {
                 {uploadMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
+                    Analyzing with AI...
                   </>
-                ) : "Upload for OCR Analysis"}
+                ) : "Upload for AI Analysis"}
               </Button>
             </CardFooter>
           </Card>
@@ -312,11 +494,28 @@ export default function OCRPrescriptionPage() {
         
         <TabsContent value="results" className="mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>OCR Analysis Results</CardTitle>
-              <CardDescription>
-                View the extracted information from the prescription image
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle>OCR Analysis Results</CardTitle>
+                <CardDescription>
+                  AI-extracted information from the prescription image
+                </CardDescription>
+              </div>
+              <div>
+                {analysisMutation.data?.status && (
+                  <Badge 
+                    variant={
+                      analysisMutation.data.status === "completed" ? "default" : 
+                      analysisMutation.data.status === "failed" ? "destructive" : 
+                      "outline"
+                    }
+                  >
+                    {analysisMutation.data.status === "completed" ? "Analyzed" : 
+                     analysisMutation.data.status === "failed" ? "Failed" : 
+                     "Processing"}
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
             
             <CardContent>
@@ -331,9 +530,11 @@ export default function OCRPrescriptionPage() {
                       <p className="text-sm font-medium">Status:</p>
                       <p className="text-sm">
                         {analysisMutation.data.status === "completed" ? (
-                          <span className="text-green-600 font-medium">Completed</span>
+                          <span className="text-green-600 font-medium">Analysis Completed</span>
+                        ) : analysisMutation.data.status === "failed" ? (
+                          <span className="text-red-600 font-medium">Analysis Failed</span>
                         ) : (
-                          <span className="text-amber-600 font-medium">In Progress</span>
+                          <span className="text-amber-600 font-medium">Processing</span>
                         )}
                       </p>
                     </div>
@@ -346,11 +547,15 @@ export default function OCRPrescriptionPage() {
                   </div>
                   
                   {analysisMutation.data.status === "completed" && analysisMutation.data.analysisResults ? (
-                    <div className="border rounded-md p-4 bg-muted mt-4">
-                      <pre className="text-sm whitespace-pre-wrap">
-                        {JSON.stringify(analysisMutation.data.analysisResults, null, 2)}
-                      </pre>
-                    </div>
+                    renderAnalysisResults()
+                  ) : analysisMutation.data.status === "failed" ? (
+                    <Alert variant="destructive" className="mt-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Analysis failed</AlertTitle>
+                      <AlertDescription>
+                        {analysisMutation.data.errorMessage || "The prescription image could not be analyzed. Please try again with a clearer image."}
+                      </AlertDescription>
+                    </Alert>
                   ) : (
                     <Alert className="mt-4">
                       <AlertTitle>Analysis in progress</AlertTitle>
@@ -370,10 +575,10 @@ export default function OCRPrescriptionPage() {
               )}
             </CardContent>
             
-            <CardFooter>
+            <CardFooter className="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
               <Button 
                 variant="outline" 
-                className="w-full" 
+                className="w-full"
                 onClick={handleRefreshAnalysis}
                 disabled={analysisMutation.isPending || !analysisId}
               >
@@ -389,6 +594,37 @@ export default function OCRPrescriptionPage() {
                   </>
                 )}
               </Button>
+              
+              {analysisMutation.data?.status === "completed" && !analysisMutation.data.convertedPrescriptionId && (
+                <Button 
+                  className="w-full" 
+                  onClick={handleConvertToPrescription}
+                  disabled={convertMutation.isPending || !analysisId}
+                >
+                  {convertMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Converting...
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Convert to Prescription
+                    </>
+                  )}
+                </Button>
+              )}
+              
+              {analysisMutation.data?.convertedPrescriptionId && (
+                <Button 
+                  variant="secondary"
+                  className="w-full"
+                  disabled
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Converted to Prescription #{analysisMutation.data.convertedPrescriptionId}
+                </Button>
+              )}
             </CardFooter>
           </Card>
         </TabsContent>

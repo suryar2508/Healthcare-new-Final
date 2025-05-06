@@ -18,6 +18,8 @@ import { ZodError } from "zod";
 import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { db } from "@db";
 import * as schema from "@shared/schema";
+import { openaiService } from "./services/openai.service";
+import { prescription as prescriptionService } from "./services/prescription.service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -591,22 +593,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Ensure user object exists and has a default
       const userId = req.user?.id || 1;
       
-      // Insert the OCR prescription upload record
-      const upload = await db.insert(schema.ocrPrescriptionUploads).values({
-        patientId: parseInt(patientId),
-        imageUrl: image, // Using the correct field name from schema
-        status: 'pending',
-        extractedText: null,
-        confidenceScore: null,
-        errorMessage: null,
-      }).returning();
-      
-      // In a real implementation, this would trigger an OCR analysis job
-      // For now, we'll just return success
-      res.status(201).json({ 
-        id: upload[0].id,
-        message: "Prescription uploaded successfully and scheduled for OCR analysis"
-      });
+      try {
+        // Use OpenAI to analyze the prescription image
+        const analysisResults = await openaiService.analyzePrescriptionImage(image);
+        
+        // Insert the OCR prescription upload record with analysis results
+        const upload = await db.insert(schema.ocrPrescriptionUploads).values({
+          patientId: parseInt(patientId),
+          imageUrl: image, 
+          status: 'completed',
+          extractedText: JSON.stringify(analysisResults),
+          confidenceScore: 0.95, // This would be dynamically determined in a real implementation
+          errorMessage: null,
+        }).returning();
+        
+        res.status(201).json({ 
+          id: upload[0].id,
+          message: "Prescription uploaded and analyzed successfully",
+          analysisResults
+        });
+      } catch (aiError: any) {
+        console.error("AI analysis error:", aiError);
+        
+        // Store the upload but mark it as failed
+        const upload = await db.insert(schema.ocrPrescriptionUploads).values({
+          patientId: parseInt(patientId),
+          imageUrl: image,
+          status: 'failed',
+          extractedText: null,
+          confidenceScore: null,
+          errorMessage: aiError.message || "Analysis failed",
+        }).returning();
+        
+        res.status(201).json({ 
+          id: upload[0].id,
+          message: "Prescription uploaded but analysis failed. Please try again later.",
+          error: aiError.message
+        });
+      }
     } catch (error) {
       next(error);
     }
@@ -629,7 +653,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "OCR analysis not found" });
       }
       
-      res.json(analysis);
+      // Parse the extracted text if it exists
+      let analysisResults = null;
+      if (analysis.extractedText) {
+        try {
+          analysisResults = JSON.parse(analysis.extractedText);
+        } catch (e) {
+          console.error("Error parsing analysis results:", e);
+        }
+      }
+      
+      // Format response
+      const response = {
+        ...analysis,
+        analysisResults
+      };
+      
+      res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Add an endpoint to convert OCR results into a prescription
+  apiRouter.post("/ocr-prescription/convert/:id", authenticate, async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid OCR analysis ID" });
+      }
+      
+      // Get the OCR analysis record
+      const analysis = await db.query.ocrPrescriptionUploads.findFirst({
+        where: eq(schema.ocrPrescriptionUploads.id, id)
+      });
+      
+      if (!analysis) {
+        return res.status(404).json({ error: "OCR analysis not found" });
+      }
+      
+      if (analysis.status !== 'completed' || !analysis.extractedText) {
+        return res.status(400).json({ 
+          error: "Cannot convert incomplete or failed analysis",
+          status: analysis.status
+        });
+      }
+      
+      // Parse the extracted text
+      const analysisResults = JSON.parse(analysis.extractedText);
+      
+      // Create a new prescription from the OCR results
+      const patientId = analysis.patientId;
+      const doctorId = req.user?.id || 1;
+      
+      // Extract medication details from the analysis
+      const medications = analysisResults.medications || [];
+      
+      // Create the prescription
+      const prescriptionData = {
+        patientId,
+        doctorId,
+        notes: analysisResults.diagnosis || "Converted from prescription image",
+        status: "pending" as const
+      };
+      
+      // Create prescription items from the medications
+      const items = medications.map((med: any) => ({
+        medicationName: med.name || "Unknown medication",
+        dosage: med.dosage || "As directed",
+        frequency: med.frequency || "As needed",
+        duration: med.duration || "As needed",
+        instructions: med.instructions || ""
+      }));
+      
+      // Use the prescription service to create the prescription with items
+      const result = await prescriptionService.submitPrescription(prescriptionData, items);
+      
+      // Access the prescription ID from the result object
+      const prescriptionId = result.prescription.id;
+      
+      // Update the OCR record with the converted prescription ID
+      await db.update(schema.ocrPrescriptionUploads)
+        .set({ 
+          convertedPrescriptionId: prescriptionId,
+          processedAt: new Date()
+        })
+        .where(eq(schema.ocrPrescriptionUploads.id, id))
+        .execute();
+      
+      res.json({
+        message: "OCR prescription successfully converted to formal prescription",
+        prescriptionId: prescriptionId,
+        prescription: result
+      });
     } catch (error) {
       next(error);
     }
