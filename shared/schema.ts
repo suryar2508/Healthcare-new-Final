@@ -7,6 +7,9 @@ import { relations } from "drizzle-orm";
 export const userRoleEnum = pgEnum('user_role', ['admin', 'doctor', 'patient', 'pharmacist']);
 export const appointmentStatusEnum = pgEnum('appointment_status', ['scheduled', 'completed', 'cancelled']);
 export const medicationFrequencyEnum = pgEnum('medication_frequency', ['once_daily', 'twice_daily', 'three_times_daily', 'four_times_daily', 'as_needed']);
+export const prescriptionStatusEnum = pgEnum('prescription_status', ['pending', 'processing', 'ready', 'delivered', 'cancelled']);
+export const inventoryStatusEnum = pgEnum('inventory_status', ['in_stock', 'low_stock', 'out_of_stock', 'expired', 'discontinued']);
+export const feedbackRatingEnum = pgEnum('feedback_rating', ['1', '2', '3', '4', '5']);
 
 // Users table
 export const users = pgTable("users", {
@@ -64,10 +67,14 @@ export const appointments = pgTable("appointments", {
 export const prescriptions = pgTable("prescriptions", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id").references(() => patients.id).notNull(),
-  doctorId: integer("doctor_id").references(() => doctors.id).notNull(),
+  doctorId: integer("doctor_id").references(() => doctors.id),
   diagnosis: text("diagnosis"),
   instructions: text("instructions"),
   followUpDate: date("follow_up_date"),
+  status: prescriptionStatusEnum("status").default('pending').notNull(),
+  isOcrGenerated: boolean("is_ocr_generated").default(false).notNull(),
+  originalImageUrl: text("original_image_url"),
+  aiAnalysisData: json("ai_analysis_data"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   vitalSigns: json("vital_signs").$type<{
     bloodPressure?: string,
@@ -156,6 +163,67 @@ export const drugInteractions = pgTable("drug_interactions", {
   effect: text("effect"),
 });
 
+// Medicine Inventory table for pharmacists
+export const medicineInventory = pgTable("medicine_inventory", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  brandName: text("brand_name"),
+  description: text("description"),
+  dosageForm: text("dosage_form"), // tablet, capsule, liquid, etc.
+  strength: text("strength"), // e.g., "500mg", "10mg/ml"
+  category: text("category"),
+  quantity: integer("quantity").default(0).notNull(),
+  threshold: integer("threshold").default(10).notNull(), // alert when stock falls below this
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
+  expiryDate: date("expiry_date"),
+  status: inventoryStatusEnum("status").default('in_stock').notNull(),
+  location: text("location"), // storage location in pharmacy
+  batchNumber: text("batch_number"),
+  manufacturer: text("manufacturer"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Prescription Analysis table for ML insights
+export const prescriptionAnalysis = pgTable("prescription_analysis", {
+  id: serial("id").primaryKey(),
+  prescriptionId: integer("prescription_id").references(() => prescriptions.id),
+  doctorId: integer("doctor_id").references(() => doctors.id),
+  patientId: integer("patient_id").references(() => patients.id),
+  analysisType: text("analysis_type").notNull(), // trend, interaction, anomaly, etc.
+  analysisResult: json("analysis_result").notNull(),
+  confidence: decimal("confidence", { precision: 5, scale: 2 }),
+  recommendation: text("recommendation"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Feedback table for patient ratings
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  patientId: integer("patient_id").references(() => patients.id).notNull(),
+  doctorId: integer("doctor_id").references(() => doctors.id),
+  prescriptionId: integer("prescription_id").references(() => prescriptions.id),
+  appointmentId: integer("appointment_id").references(() => appointments.id),
+  rating: feedbackRatingEnum("rating").notNull(),
+  comment: text("comment"),
+  category: text("category").notNull(), // service, doctor, prescription, app_experience
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// OCR Prescription Uploads table
+export const ocrPrescriptionUploads = pgTable("ocr_prescription_uploads", {
+  id: serial("id").primaryKey(),
+  patientId: integer("patient_id").references(() => patients.id).notNull(),
+  imageUrl: text("image_url").notNull(),
+  status: text("status").default('pending').notNull(), // pending, processing, completed, failed
+  extractedText: text("extracted_text"),
+  confidenceScore: decimal("confidence_score", { precision: 5, scale: 2 }),
+  convertedPrescriptionId: integer("converted_prescription_id").references(() => prescriptions.id),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   doctors: many(doctors),
@@ -216,6 +284,31 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, { fields: [notifications.userId], references: [users.id] }),
 }));
 
+export const medicineInventoryRelations = relations(medicineInventory, ({ many }) => ({
+  prescriptionItems: many(prescriptionItems),
+}));
+
+export const prescriptionAnalysisRelations = relations(prescriptionAnalysis, ({ one }) => ({
+  prescription: one(prescriptions, { fields: [prescriptionAnalysis.prescriptionId], references: [prescriptions.id] }),
+  doctor: one(doctors, { fields: [prescriptionAnalysis.doctorId], references: [doctors.id] }),
+  patient: one(patients, { fields: [prescriptionAnalysis.patientId], references: [patients.id] }),
+}));
+
+export const feedbackRelations = relations(feedback, ({ one }) => ({
+  patient: one(patients, { fields: [feedback.patientId], references: [patients.id] }),
+  doctor: one(doctors, { fields: [feedback.doctorId], references: [doctors.id] }),
+  prescription: one(prescriptions, { fields: [feedback.prescriptionId], references: [prescriptions.id] }),
+  appointment: one(appointments, { fields: [feedback.appointmentId], references: [appointments.id] }),
+}));
+
+export const ocrPrescriptionUploadsRelations = relations(ocrPrescriptionUploads, ({ one }) => ({
+  patient: one(patients, { fields: [ocrPrescriptionUploads.patientId], references: [patients.id] }),
+  convertedPrescription: one(prescriptions, { 
+    fields: [ocrPrescriptionUploads.convertedPrescriptionId], 
+    references: [prescriptions.id] 
+  }),
+}));
+
 // Validation schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -255,6 +348,28 @@ export const insertMedicationScheduleSchema = createInsertSchema(medicationSched
   id: true,
 });
 
+export const insertMedicineInventorySchema = createInsertSchema(medicineInventory).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPrescriptionAnalysisSchema = createInsertSchema(prescriptionAnalysis).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFeedbackSchema = createInsertSchema(feedback).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOcrPrescriptionUploadSchema = createInsertSchema(ocrPrescriptionUploads).omit({
+  id: true,
+  createdAt: true,
+  processedAt: true,
+});
+
 // Select schemas
 export const selectUserSchema = createSelectSchema(users);
 export const selectDoctorSchema = createSelectSchema(doctors);
@@ -264,6 +379,10 @@ export const selectPrescriptionSchema = createSelectSchema(prescriptions);
 export const selectPrescriptionItemSchema = createSelectSchema(prescriptionItems);
 export const selectHealthMetricSchema = createSelectSchema(healthMetrics);
 export const selectMedicationScheduleSchema = createSelectSchema(medicationSchedules);
+export const selectMedicineInventorySchema = createSelectSchema(medicineInventory);
+export const selectPrescriptionAnalysisSchema = createSelectSchema(prescriptionAnalysis);
+export const selectFeedbackSchema = createSelectSchema(feedback);
+export const selectOcrPrescriptionUploadSchema = createSelectSchema(ocrPrescriptionUploads);
 
 // Type definitions
 export type User = z.infer<typeof selectUserSchema>;
@@ -274,6 +393,10 @@ export type Prescription = z.infer<typeof selectPrescriptionSchema>;
 export type PrescriptionItem = z.infer<typeof selectPrescriptionItemSchema>;
 export type HealthMetric = z.infer<typeof selectHealthMetricSchema>;
 export type MedicationSchedule = z.infer<typeof selectMedicationScheduleSchema>;
+export type MedicineInventory = z.infer<typeof selectMedicineInventorySchema>;
+export type PrescriptionAnalysis = z.infer<typeof selectPrescriptionAnalysisSchema>;
+export type Feedback = z.infer<typeof selectFeedbackSchema>;
+export type OcrPrescriptionUpload = z.infer<typeof selectOcrPrescriptionUploadSchema>;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
@@ -283,3 +406,7 @@ export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
 export type InsertPrescriptionItem = z.infer<typeof insertPrescriptionItemSchema>;
 export type InsertHealthMetric = z.infer<typeof insertHealthMetricSchema>;
 export type InsertMedicationSchedule = z.infer<typeof insertMedicationScheduleSchema>;
+export type InsertMedicineInventory = z.infer<typeof insertMedicineInventorySchema>;
+export type InsertPrescriptionAnalysis = z.infer<typeof insertPrescriptionAnalysisSchema>;
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+export type InsertOcrPrescriptionUpload = z.infer<typeof insertOcrPrescriptionUploadSchema>;
