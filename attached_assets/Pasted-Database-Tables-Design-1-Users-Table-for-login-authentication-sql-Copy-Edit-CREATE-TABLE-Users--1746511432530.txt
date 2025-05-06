@@ -1,0 +1,182 @@
+Database Tables Design
+1. Users Table (for login/authentication)
+sql
+Copy
+Edit
+CREATE TABLE Users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    email VARCHAR(100),
+    phone VARCHAR(15),
+    role ENUM('admin', 'patient', 'doctor', 'pharmacist') NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE
+);
+2. Patient Profile
+sql
+Copy
+Edit
+CREATE TABLE Patients (
+    patient_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    full_name VARCHAR(100),
+    gender VARCHAR(10),
+    age INT,
+    address TEXT,
+    existing_conditions TEXT,
+    allergies TEXT,
+    medications TEXT,
+    id_proof TEXT,
+    insurance_details TEXT,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+3. Doctor Profile
+sql
+Copy
+Edit
+CREATE TABLE Doctors (
+    doctor_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    full_name VARCHAR(100),
+    specialization VARCHAR(50),
+    qualifications TEXT,
+    experience INT,
+    consultation_type ENUM('virtual', 'in-person', 'both'),
+    available_from TIME,
+    available_to TIME,
+    hospital_location TEXT,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+);
+4. Appointments
+sql
+Copy
+Edit
+CREATE TABLE Appointments (
+    appointment_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT,
+    doctor_id INT,
+    appointment_date DATE,
+    time_slot TIME,
+    status ENUM('confirmed', 'cancelled', 'rescheduled', 'completed') DEFAULT 'confirmed',
+    consultation_type ENUM('virtual', 'in-person'),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id)
+);
+5. Vitals / Health Monitoring
+sql
+Copy
+Edit
+CREATE TABLE Vitals (
+    vital_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT,
+    bp VARCHAR(20),
+    blood_sugar VARCHAR(20),
+    pulse_rate INT,
+    spo2_level INT,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id)
+);
+6. Prescriptions
+sql
+Copy
+Edit
+CREATE TABLE Prescriptions (
+    prescription_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT,
+    doctor_id INT,
+    issued_by ENUM('doctor', 'ocr_model'),
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id)
+);
+7. Prescription Medicines
+sql
+Copy
+Edit
+CREATE TABLE Prescription_Medicines (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    prescription_id INT,
+    medicine_name VARCHAR(100),
+    dosage VARCHAR(20),
+    frequency VARCHAR(20),
+    duration_days INT,
+    timing VARCHAR(50),
+    notes TEXT,
+    FOREIGN KEY (prescription_id) REFERENCES Prescriptions(prescription_id)
+);
+8. Medicine Inventory (Pharmacy)
+sql
+Copy
+Edit
+CREATE TABLE Pharmacy_Inventory (
+    medicine_id INT PRIMARY KEY AUTO_INCREMENT,
+    medicine_name VARCHAR(100),
+    composition TEXT,
+    brand_name VARCHAR(100),
+    quantity_in_stock INT,
+    price_per_unit DECIMAL(10,2)
+);
+9. Bills
+sql
+Copy
+Edit
+CREATE TABLE Bills (
+    bill_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT,
+    prescription_id INT,
+    total_amount DECIMAL(10,2),
+    status ENUM('pending', 'paid') DEFAULT 'pending',
+    issued_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id),
+    FOREIGN KEY (prescription_id) REFERENCES Prescriptions(prescription_id)
+);
+10. Drug Interaction Warnings
+sql
+Copy
+Edit
+CREATE TABLE Drug_Interaction_Alerts (
+    alert_id INT PRIMARY KEY AUTO_INCREMENT,
+    prescription_id INT,
+    interacting_drugs TEXT,
+    severity ENUM('low', 'moderate', 'high'),
+    suggested_action TEXT,
+    FOREIGN KEY (prescription_id) REFERENCES Prescriptions(prescription_id)
+);
+11. Food Recommendations
+sql
+Copy
+Edit
+CREATE TABLE Food_Recommendations (
+    recommendation_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT,
+    condition VARCHAR(100),
+    recommended_foods TEXT,
+    foods_to_avoid TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id)
+);
+12. Uploaded Prescriptions (for OCR)
+sql
+Copy
+Edit
+CREATE TABLE Uploaded_Prescriptions (
+    upload_id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT,
+    image_path TEXT,
+    ocr_status ENUM('pending', 'processed'),
+    extracted_text TEXT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id)
+);
+✅ Next Steps
+Would you like me to now:
+
+✅ Convert this into a clean PDF document?
+
+✅ Provide an ER diagram?
+
+✅ Add sample data inserts or queries?
+
+Let me know how you'd like to proceed!

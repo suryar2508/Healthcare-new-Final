@@ -3,11 +3,22 @@ import * as schema from "@shared/schema";
 import { eq, and, desc, gte, lte, or, sql, asc, isNull, isNotNull, inArray } from "drizzle-orm";
 import { InsertUser, InsertDoctor, InsertPatient, InsertAppointment, InsertPrescription, InsertHealthMetric, InsertMedicationSchedule } from "@shared/schema";
 
+import session from "express-session";
+import { db } from "../db";
+import { users, InsertUser } from "@shared/schema";
+import { eq } from "drizzle-orm";
+
 /**
  * Storage class for database operations
  * Provides methods for CRUD operations on all entities
  */
 class Storage {
+  sessionStore: session.SessionStore;
+  
+  constructor() {
+    // This will be initialized in setupAuth
+    this.sessionStore = {} as session.SessionStore;
+  }
   // User operations
   async getUserByCredentials(username: string, password: string) {
     try {
@@ -31,6 +42,17 @@ class Storage {
       });
     } catch (error) {
       console.error("Error getting user by ID:", error);
+      throw new Error("Database error when retrieving user");
+    }
+  }
+  
+  async getUserByUsername(username: string) {
+    try {
+      return await db.query.users.findFirst({
+        where: eq(schema.users.username, username),
+      });
+    } catch (error) {
+      console.error("Error getting user by username:", error);
       throw new Error("Database error when retrieving user");
     }
   }
