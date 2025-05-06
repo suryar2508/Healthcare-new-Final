@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users } from "@shared/schema";
+import * as schema from "./shared/schema";
 import { eq } from "drizzle-orm";
 import { createHash } from "crypto";
 
@@ -12,7 +12,7 @@ async function fixAllPasswords() {
   try {
     console.log("Fetching all users...");
     
-    const allUsers = await db.select().from(users);
+    const allUsers = await db.select().from(schema.users);
     
     if (allUsers.length === 0) {
       console.log("No users found. Please run the seed script first.");
@@ -26,7 +26,7 @@ async function fixAllPasswords() {
     console.log("Generated hash:", hashedPassword);
     
     // Update all user passwords
-    const updatedUsers = await db.update(users)
+    const updatedUsers = await db.update(schema.users)
       .set({ password: hashedPassword })
       .returning();
     
@@ -38,14 +38,10 @@ async function fixAllPasswords() {
   } catch (error) {
     console.error("Error fixing passwords:", error);
   } finally {
-    // Close the database connection
-    if (db && typeof db.close === 'function') {
-      await db.close();
-    }
-    
+    // No need to close db connection as it's a pool in this project
     console.log("Done. You can now login with any user, password: password123");
   }
 }
 
 // Execute the function
-fixAdminPassword();
+fixAllPasswords();
