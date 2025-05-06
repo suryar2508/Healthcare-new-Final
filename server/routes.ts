@@ -21,6 +21,9 @@ import * as schema from "@shared/schema";
 import { geminiService } from "./services/gemini.service";
 import { prescription as prescriptionService } from "./services/prescription.service";
 
+// Import route modules
+import vitalsRouter from "./routes/vitals";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
@@ -754,38 +757,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const symptomList = (symptoms as string).split(',').map(s => s.trim());
       
-      // In a real implementation, we would search a symptom-diagnosis database
-      // For now, this would be implemented when the database is populated with real data
-      res.json({ 
-        symptoms: symptomList,
-        possibleDiagnoses: [],
-        message: "Symptom-diagnosis mapping will be available when database is populated"
-      });
+      try {
+        // Use Gemini AI to analyze symptoms and provide possible diagnoses
+        const analysisResults = await geminiService.analyzeSymptoms(symptomList);
+        
+        res.json({ 
+          symptoms: symptomList,
+          possibleDiagnoses: analysisResults.diagnoses || [],
+          aiPowered: true
+        });
+      } catch (aiError: any) {
+        console.error("AI symptom analysis error:", aiError);
+        
+        // Fallback to database if AI fails
+        // In a real implementation, we would search a symptom-diagnosis database
+        res.json({ 
+          symptoms: symptomList,
+          possibleDiagnoses: [],
+          message: "AI-powered diagnosis temporarily unavailable. Please try again later.",
+          error: aiError.message
+        });
+      }
     } catch (error) {
       next(error);
     }
   });
   
-  // Patient vitals historical data route
-  apiRouter.get("/patient-vitals/history/:patientId", authenticate, async (req, res, next) => {
-    try {
-      const patientId = parseInt(req.params.patientId);
-      
-      if (isNaN(patientId)) {
-        return res.status(400).json({ error: "Invalid patient ID" });
-      }
-      
-      // Get the patient's health metrics, ordered by date
-      const vitals = await db.query.healthMetrics.findMany({
-        where: eq(schema.healthMetrics.patientId, patientId),
-        orderBy: [desc(schema.healthMetrics.recordedAt)]
-      });
-      
-      res.json(vitals);
-    } catch (error) {
-      next(error);
-    }
-  });
+  // Mount vitals router for patient vitals data and AI analysis
+  apiRouter.use('/patient-vitals', authenticate, vitalsRouter);
 
   // Apply error handling middleware
   apiRouter.use(handleErrors);
