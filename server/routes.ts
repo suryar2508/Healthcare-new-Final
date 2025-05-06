@@ -70,23 +70,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Authentication middleware
-  const authenticate = async (req: Express.Request & { user?: { id: number, username: string, email: string, fullName: string, role: string } }, res: any, next: any) => {
+  const authenticate = async (req: Express.Request, res: any, next: any) => {
     // Check if user is authenticated via Passport
     if (req.isAuthenticated && req.isAuthenticated()) {
       // User is already authenticated by Passport
       return next();
     }
     
-    // For development purposes, provide a default user if not authenticated
-    // In production, this would return a 401 Unauthorized error
-    req.user = { 
-      id: 1, 
-      username: "doctor_user",
-      email: "doctor@example.com",
-      fullName: "Dr. Sample User",
-      role: "doctor" 
-    };
-    next();
+    // User is not authenticated, return 401 Unauthorized
+    return res.status(401).json({ 
+      message: "Authentication required", 
+      status: "error" 
+    });
   };
 
   // API Routes
@@ -110,39 +105,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(statusCode).json({ error: message });
   };
 
-  // User routes
-  apiRouter.post("/users/login", async (req, res, next) => {
-    try {
-      const { username, password } = req.body;
-      
-      if (!username || !password) {
-        return res.status(400).json({ error: "Username and password are required" });
-      }
-      
-      const user = await storage.getUserByCredentials(username, password);
-      
-      if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-      
-      // Set session or return JWT token here
-      
-      res.json({ user: { id: user.id, username: user.username, role: user.role } });
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  apiRouter.post("/users/register", async (req, res, next) => {
-    try {
-      const userData = insertUserSchema.parse(req.body);
-      const user = await storage.insertUser(userData);
-      
-      res.status(201).json(user);
-    } catch (error) {
-      next(error);
-    }
-  });
+  // User routes are managed by the Passport authentication system
+  // in server/auth.ts which sets up /api/login, /api/register, /api/logout, and /api/user routes
 
   // Doctor routes
   apiRouter.get("/doctors", async (req, res, next) => {

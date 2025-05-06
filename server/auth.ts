@@ -59,8 +59,9 @@ export function setupAuth(app: Express) {
       createTableIfMissing: true,
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to false for development to work without HTTPS
       maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: 'lax' // Set SameSite to lax for better compatibility
     },
   };
 
