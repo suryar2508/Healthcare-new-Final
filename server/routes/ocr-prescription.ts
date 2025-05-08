@@ -1,7 +1,12 @@
 import type { Express, Request, Response } from "express";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
-import { ocrPrescriptionUploads, selectOcrPrescriptionUploadSchema } from "@shared/schema";
+import { 
+  ocrPrescriptionUploads, 
+  selectOcrPrescriptionUploadSchema, 
+  prescriptions, 
+  prescriptionItems 
+} from "@shared/schema";
 import { geminiService } from "../services/gemini.service";
 import { z } from "zod";
 
@@ -129,19 +134,27 @@ export function setupOcrPrescriptionRoutes(app: Express) {
       const extractedText = upload.extractedText ? JSON.parse(upload.extractedText) : {};
       const medications = extractedText.medications || [];
       
-      // 3. Create a simplified mock prescription directly in the database
-      // Create just a simple mock prescription without doctor_id foreign key
-      // to avoid the foreign key constraint error
+      // 3. Get the extracted medications data
       const patientId = upload.patientId;
-      const [prescription] = await db.insert(ocrPrescriptionUploads)
+      
+      // We need to find a valid doctor in the system to avoid foreign key constraints
+      const doctor = await db.query.doctors.findFirst();
+      
+      if (!doctor) {
+        return res.status(500).json({ 
+          error: "Cannot convert prescription - no doctors found in system",
+          details: "System requires at least one doctor in the database to associate prescriptions" 
+        });
+      }
+      
+      // Create a real prescription in the prescriptions table
+      const [prescription] = await db.insert(prescriptions)
         .values({
           patientId: patientId,
-          imageUrl: upload.imageUrl,
-          status: "converted",
-          extractedText: upload.extractedText,
-          confidenceScore: upload.confidenceScore,
-          errorMessage: null,
-          processedAt: new Date(),
+          doctorId: doctor.id, // Use the first doctor in the system
+          status: "pending",
+          issueDate: new Date(),
+          notes: "Converted from OCR prescription"
         })
         .returning();
       
