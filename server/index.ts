@@ -69,7 +69,11 @@ app.use((req, res, next) => {
   
   try {
     await new Promise((resolve, reject) => {
-      server.listen(port, "0.0.0.0", (err) => {
+      server.listen({
+        port: port,
+        host: "0.0.0.0",
+        backlog: 100
+      }, (err) => {
         if (err) {
           reject(err);
           return;
@@ -78,6 +82,27 @@ app.use((req, res, next) => {
         resolve(true);
       });
     });
+
+    // Handle server errors
+    server.on('error', (error: any) => {
+      if (error.syscall !== 'listen') {
+        throw error;
+      }
+
+      switch (error.code) {
+        case 'EACCES':
+          log(`Port ${port} requires elevated privileges`);
+          process.exit(1);
+          break;
+        case 'EADDRINUSE':
+          log(`Port ${port} is already in use`);
+          process.exit(1);
+          break;
+        default:
+          throw error;
+      }
+    });
+
   } catch (err) {
     log(`Failed to start server: ${err}`);
     process.exit(1);
