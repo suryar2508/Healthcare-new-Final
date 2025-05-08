@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
-import { Bell, Mail, Menu, Info } from 'lucide-react';
+import { Bell, Mail, Menu, Info, LogOut } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
@@ -69,6 +69,15 @@ export default function Header({ toggleSidebar }: HeaderProps) {
       
       {user && (
         <div className="flex items-center space-x-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => logoutMutation.mutate()}
+            className="flex items-center gap-2 text-destructive"
+          >
+            <LogOut className="h-4 w-4" />
+            {logoutMutation.isPending ? "Logging out..." : "Logout"}
+          </Button>
           {/* Special link to the patient test page - accessible to all users */}
           <Button variant="outline" size="sm" asChild className="border-yellow-500 text-yellow-600 hover:bg-yellow-50">
             <Link href="/patient-test" className="flex items-center gap-1">
