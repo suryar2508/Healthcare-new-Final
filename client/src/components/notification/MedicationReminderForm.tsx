@@ -16,6 +16,8 @@ interface Medication {
   id: string;
   name: string;
   time: string;
+  startDate: string;
+  endDate: string;
   days: string[];
   active: boolean;
 }
@@ -37,6 +39,15 @@ const MedicationReminderForm: React.FC = () => {
   const [newMedication, setNewMedication] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('08:00');
   const [selectedDays, setSelectedDays] = useState<string[]>(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+  
+  // Get today's date and format for date input (YYYY-MM-DD)
+  const today = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState<string>(today);
+  
+  // Default end date is 30 days from now
+  const defaultEndDate = new Date();
+  defaultEndDate.setDate(defaultEndDate.getDate() + 30);
+  const [endDate, setEndDate] = useState<string>(defaultEndDate.toISOString().split('T')[0]);
 
   // Add new medication reminder
   const addMedication = () => {
@@ -48,10 +59,21 @@ const MedicationReminderForm: React.FC = () => {
       return;
     }
     
+    if (new Date(startDate) > new Date(endDate)) {
+      toast({
+        title: 'Invalid date range',
+        description: 'Start date must be before end date',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     const medication: Medication = {
       id: Date.now().toString(),
       name: newMedication,
       time: selectedTime,
+      startDate: startDate,
+      endDate: endDate,
       days: [...selectedDays],
       active: true,
     };
@@ -84,6 +106,8 @@ const MedicationReminderForm: React.FC = () => {
         medications: medications.map(med => ({
           medicationName: med.name,
           time: med.time,
+          startDate: med.startDate,
+          endDate: med.endDate,
           days: med.days,
           active: med.active
         }))
@@ -162,6 +186,30 @@ const MedicationReminderForm: React.FC = () => {
               />
             </div>
             
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="start-date">Start Date</Label>
+                <Input 
+                  id="start-date" 
+                  type="date"
+                  value={startDate}
+                  min={today}
+                  onChange={e => setStartDate(e.target.value)}
+                />
+              </div>
+              
+              <div className="grid gap-1.5">
+                <Label htmlFor="end-date">End Date</Label>
+                <Input 
+                  id="end-date" 
+                  type="date"
+                  value={endDate}
+                  min={startDate}
+                  onChange={e => setEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            
             <div className="grid gap-1.5">
               <Label>Days of Week</Label>
               <div className="flex flex-wrap gap-2">
@@ -223,6 +271,9 @@ const MedicationReminderForm: React.FC = () => {
                       <span>{medication.time}</span>
                       <span className="mx-1">•</span>
                       <span>{medication.days.length === 7 ? 'Every day' : `${medication.days.length} days`}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(medication.startDate).toLocaleDateString()} to {new Date(medication.endDate).toLocaleDateString()}
                     </div>
                   </div>
                   
