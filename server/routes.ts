@@ -168,6 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const handleErrors = (err: any, req: any, res: any, next: any) => {
     console.error("API Error:", err);
     
+    // Handle validation errors
     if (err instanceof ZodError) {
       return res.status(400).json({ 
         error: "Validation error", 
@@ -175,10 +176,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
     
+    // Handle network errors
+    if (err.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        error: "Service temporarily unavailable",
+        message: "Database or service connection failed"
+      });
+    }
+
+    // Handle unauthorized errors
+    if (err.status === 401 || err.statusCode === 401) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "Please login to access this resource"
+      });
+    }
+
+    // Default error handler
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal server error";
     
-    res.status(statusCode).json({ error: message });
+    res.status(statusCode).json({ 
+      error: message,
+      path: req.path,
+      timestamp: new Date().toISOString()
+    });
   };
 
   // User routes are managed by the Passport authentication system
