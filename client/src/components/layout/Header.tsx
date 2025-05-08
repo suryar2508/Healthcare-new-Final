@@ -64,13 +64,18 @@ export default function Header({ toggleSidebar }: HeaderProps) {
             )}
           </Button>
 
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm">{user.fullName}</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{user.fullName}</span>
+              <Badge variant="outline" className="capitalize">
+                {user.role}
+              </Badge>
+            </div>
             <Button 
-              variant="destructive" 
-              size="sm" 
+              variant="outline"
+              size="sm"
               onClick={handleLogout}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 hover:bg-destructive hover:text-destructive-foreground"
               disabled={logoutMutation.isPending}
             >
               <LogOut className="h-4 w-4" />
