@@ -90,24 +90,6 @@ class NotificationService {
       
       await this.createNotification(patientNotification);
       
-      // If prescription has medication items, notify pharmacist
-      if (prescription.items && prescription.items.length > 0) {
-        // In a real system, we'd query for pharmacists and notify them
-        // For now, let's assume pharmacist has ID 1 for demonstration
-        const pharmacistUserId = 3; // Example ID
-        
-        const pharmacistNotification = {
-          userId: pharmacistUserId,
-          title: "New Prescription to Process",
-          message: `New prescription for patient ${prescription.patient.user.fullName} needs to be processed.`,
-          type: "prescription_processing",
-          isRead: false,
-          data: { prescriptionId }
-        };
-        
-        await this.createNotification(pharmacistNotification);
-      }
-      
       return true;
     } catch (error) {
       console.error("Error sending prescription notification:", error);
@@ -162,9 +144,9 @@ class NotificationService {
   }
   
   /**
-   * Send appointment status update notification to a patient
+   * Send medication reminder notification to a patient
    */
-  async sendAppointmentStatusUpdateNotification(patientId: number, appointmentId: number, status: string) {
+  async sendMedicationReminderNotification(patientId: number, medication: any) {
     try {
       // Get patient details to get userId
       const patient = await storage.getPatientById(patientId);
@@ -172,48 +154,89 @@ class NotificationService {
         throw new Error(`Patient with ID ${patientId} not found`);
       }
       
-      // Get appointment details
-      const appointment = await storage.getAppointmentById(appointmentId);
-      if (!appointment) {
-        throw new Error(`Appointment with ID ${appointmentId} not found`);
-      }
+      // Format date range
+      const startDate = new Date(medication.startDate).toLocaleDateString();
+      const endDate = new Date(medication.endDate).toLocaleDateString();
+      const dateRange = startDate === endDate ? startDate : `${startDate} to ${endDate}`;
       
-      // Format status message
-      let statusMessage = "";
-      switch (status) {
-        case "scheduled":
-          statusMessage = "confirmed";
-          break;
-        case "completed":
-          statusMessage = "marked as completed";
-          break;
-        case "cancelled":
-          statusMessage = "cancelled";
-          break;
-        default:
-          statusMessage = `updated to ${status}`;
+      // Format days
+      let daysText = "everyday";
+      if (medication.days && medication.days.length < 7) {
+        daysText = medication.days.map((day: string) => 
+          day.charAt(0).toUpperCase() + day.slice(1)
+        ).join(", ");
       }
-      
-      // Format appointment date and time
-      const date = new Date(appointment.appointmentDate);
-      const timeStr = appointment.appointmentTime.toString();
       
       // Create notification for patient
-      const notification = {
+      const notificationData = {
         userId: patient.userId,
-        title: "Appointment Update",
-        message: `Your appointment with Dr. ${appointment.doctor.user.fullName} on ${date.toLocaleDateString()} at ${timeStr} has been ${statusMessage}.`,
-        type: "appointment_update",
+        title: "Medication Reminder",
+        message: `Remember to take ${medication.medicationName} at ${medication.time} ${daysText} (${dateRange})`,
+        type: "medication_reminder",
         isRead: false,
-        data: { appointmentId }
+        data: { medication }
       };
       
-      await this.createNotification(notification);
+      await this.createNotification(notificationData);
       
       return true;
     } catch (error) {
-      console.error("Error sending appointment status update notification:", error);
-      throw new Error("Failed to send appointment status update notification");
+      console.error("Error sending medication reminder notification:", error);
+      throw new Error("Failed to send medication reminder notification");
+    }
+  }
+  
+  /**
+   * Send email notification for medication reminder
+   */
+  async sendMedicationReminderEmail(patientId: number, medication: any) {
+    try {
+      // Get patient details
+      const patient = await storage.getPatientById(patientId);
+      if (!patient) {
+        throw new Error(`Patient with ID ${patientId} not found`);
+      }
+      
+      // Check if SendGrid API key is available
+      if (!process.env.SENDGRID_API_KEY) {
+        console.warn("SendGrid API key not found. Email notification not sent.");
+        return false;
+      }
+      
+      // Format days text
+      let daysText = "everyday";
+      if (medication.days && medication.days.length < 7) {
+        daysText = medication.days.map((day: string) => 
+          day.charAt(0).toUpperCase() + day.slice(1)
+        ).join(", ");
+      }
+      
+      // Construct email content
+      const emailSubject = `Medication Reminder: ${medication.medicationName}`;
+      const emailContent = `
+        <h1>Medication Reminder</h1>
+        <p>Hello ${patient.user?.fullName},</p>
+        <p>This is a reminder to take your medication:</p>
+        <ul>
+          <li><strong>Medication:</strong> ${medication.medicationName}</li>
+          <li><strong>Time:</strong> ${medication.time}</li>
+          <li><strong>Days:</strong> ${daysText}</li>
+          <li><strong>Period:</strong> ${new Date(medication.startDate).toLocaleDateString()} to ${new Date(medication.endDate).toLocaleDateString()}</li>
+        </ul>
+        <p>Please take your medication as prescribed by your doctor.</p>
+        <p>Thank you for using our healthcare service!</p>
+      `;
+      
+      // In a real implementation, we would use SendGrid to send the email
+      // For demonstration purposes, we'll just log the email details
+      console.log(`Email notification would be sent to ${patient.user?.email}`);
+      console.log(`Subject: ${emailSubject}`);
+      console.log(`Content: ${emailContent}`);
+      
+      return true;
+    } catch (error) {
+      console.error("Error sending medication reminder email:", error);
+      throw new Error("Failed to send medication reminder email");
     }
   }
   
@@ -261,36 +284,6 @@ class NotificationService {
         }
       }
       
-      // Check pulse
-      if (vitalSigns.pulse) {
-        if (vitalSigns.pulse > thresholds.pulse.high) {
-          alerts.push({
-            type: "high_pulse",
-            message: `High pulse rate detected: ${vitalSigns.pulse} BPM.`
-          });
-        } else if (vitalSigns.pulse < thresholds.pulse.low) {
-          alerts.push({
-            type: "low_pulse",
-            message: `Low pulse rate detected: ${vitalSigns.pulse} BPM.`
-          });
-        }
-      }
-      
-      // Check temperature
-      if (vitalSigns.temperature) {
-        if (vitalSigns.temperature > thresholds.temperature.high) {
-          alerts.push({
-            type: "high_temperature",
-            message: `High temperature detected: ${vitalSigns.temperature}°F.`
-          });
-        } else if (vitalSigns.temperature < thresholds.temperature.low) {
-          alerts.push({
-            type: "low_temperature",
-            message: `Low temperature detected: ${vitalSigns.temperature}°F.`
-          });
-        }
-      }
-      
       // Send alerts if any
       for (const alert of alerts) {
         // Create notification for patient
@@ -304,291 +297,12 @@ class NotificationService {
         };
         
         await this.createNotification(patientNotification);
-        
-        // Also notify doctor(s)
-        // In a real system, we'd get the patient's primary doctor
-        // For now, let's notify a specific doctor
-        
-        // Get a recent appointment to find a doctor for this patient
-        const appointments = await storage.getAppointments({ patientId });
-        if (appointments.length > 0) {
-          const doctorId = appointments[0].doctorId;
-          const doctor = await storage.getDoctorById(doctorId);
-          
-          if (doctor) {
-            const doctorNotification = {
-              userId: doctor.userId,
-              title: "Patient Vital Alert",
-              message: `Patient ${patient.user.fullName}: ${alert.message}`,
-              type: `doctor_${alert.type}`,
-              isRead: false,
-              data: { patientId, vitalSigns }
-            };
-            
-            await this.createNotification(doctorNotification);
-          }
-        }
       }
       
       return alerts;
     } catch (error) {
       console.error("Error checking vital signs:", error);
       throw new Error("Failed to check vital signs");
-    }
-  }
-  
-  /**
-   * Check health metric and send alert if abnormal
-   */
-  async checkHealthMetric(metric: any) {
-    try {
-      // Similar to checkVitalSigns but for a single metric
-      // Implementation depends on the metric type and value structure
-      
-      // Get patient details to get userId
-      const patient = await storage.getPatientById(metric.patientId);
-      if (!patient) {
-        throw new Error(`Patient with ID ${metric.patientId} not found`);
-      }
-      
-      // Define thresholds for different metric types
-      const thresholds: any = {
-        blood_pressure: {
-          systolic: { high: 140, low: 90 },
-          diastolic: { high: 90, low: 60 }
-        },
-        glucose: { high: 140, low: 70 }, // mg/dL
-        weight: { highChange: 5, lowChange: -5 }, // kg
-        heart_rate: { high: 100, low: 60 }, // BPM
-        temperature: { high: 100.4, low: 97.0 }, // °F
-        oxygen: { high: 100, low: 95 } // %
-      };
-      
-      if (!thresholds[metric.metricType]) {
-        return null; // No thresholds defined for this metric type
-      }
-      
-      let alert = null;
-      
-      switch (metric.metricType) {
-        case "blood_pressure":
-          if (metric.metricValue.systolic > thresholds.blood_pressure.systolic.high || 
-              metric.metricValue.diastolic > thresholds.blood_pressure.diastolic.high) {
-            alert = {
-              type: "high_blood_pressure",
-              message: `High blood pressure detected: ${metric.metricValue.systolic}/${metric.metricValue.diastolic} mmHg.`
-            };
-          } else if (metric.metricValue.systolic < thresholds.blood_pressure.systolic.low || 
-                    metric.metricValue.diastolic < thresholds.blood_pressure.diastolic.low) {
-            alert = {
-              type: "low_blood_pressure",
-              message: `Low blood pressure detected: ${metric.metricValue.systolic}/${metric.metricValue.diastolic} mmHg.`
-            };
-          }
-          break;
-        
-        case "glucose":
-          if (metric.metricValue.value > thresholds.glucose.high) {
-            alert = {
-              type: "high_glucose",
-              message: `High blood glucose detected: ${metric.metricValue.value} mg/dL.`
-            };
-          } else if (metric.metricValue.value < thresholds.glucose.low) {
-            alert = {
-              type: "low_glucose",
-              message: `Low blood glucose detected: ${metric.metricValue.value} mg/dL.`
-            };
-          }
-          break;
-        
-        case "heart_rate":
-          if (metric.metricValue.value > thresholds.heart_rate.high) {
-            alert = {
-              type: "high_heart_rate",
-              message: `High heart rate detected: ${metric.metricValue.value} BPM.`
-            };
-          } else if (metric.metricValue.value < thresholds.heart_rate.low) {
-            alert = {
-              type: "low_heart_rate",
-              message: `Low heart rate detected: ${metric.metricValue.value} BPM.`
-            };
-          }
-          break;
-        
-        case "temperature":
-          if (metric.metricValue.value > thresholds.temperature.high) {
-            alert = {
-              type: "high_temperature",
-              message: `High temperature detected: ${metric.metricValue.value}°F.`
-            };
-          } else if (metric.metricValue.value < thresholds.temperature.low) {
-            alert = {
-              type: "low_temperature",
-              message: `Low temperature detected: ${metric.metricValue.value}°F.`
-            };
-          }
-          break;
-        
-        case "oxygen":
-          if (metric.metricValue.value < thresholds.oxygen.low) {
-            alert = {
-              type: "low_oxygen",
-              message: `Low oxygen saturation detected: ${metric.metricValue.value}%.`
-            };
-          }
-          break;
-      }
-      
-      if (alert) {
-        // Create notification for patient
-        const patientNotification = {
-          userId: patient.userId,
-          title: "Health Alert",
-          message: alert.message,
-          type: alert.type,
-          isRead: false,
-          data: { metric }
-        };
-        
-        await this.createNotification(patientNotification);
-        
-        // Get a recent appointment to find a doctor for this patient
-        const appointments = await storage.getAppointments({ patientId: metric.patientId });
-        if (appointments.length > 0) {
-          const doctorId = appointments[0].doctorId;
-          const doctor = await storage.getDoctorById(doctorId);
-          
-          if (doctor) {
-            const doctorNotification = {
-              userId: doctor.userId,
-              title: "Patient Health Alert",
-              message: `Patient ${patient.user.fullName}: ${alert.message}`,
-              type: `doctor_${alert.type}`,
-              isRead: false,
-              data: { patientId: metric.patientId, metric }
-            };
-            
-            await this.createNotification(doctorNotification);
-          }
-        }
-      }
-      
-      return alert;
-    } catch (error) {
-      console.error("Error checking health metric:", error);
-      throw new Error("Failed to check health metric");
-    }
-  }
-  /**
-   * Create medication reminder notification for a patient
-   */
-  async createMedicationReminder(
-    scheduleId: number,
-    patientId: number,
-    medicationName: string,
-    timing: string
-  ) {
-    try {
-      // Get patient details to get userId
-      const patient = await storage.getPatientById(patientId);
-      if (!patient) {
-        throw new Error(`Patient with ID ${patientId} not found`);
-      }
-      
-      // Format timing message
-      let timingMessage = "";
-      switch (timing) {
-        case "before_food":
-          timingMessage = "before meals";
-          break;
-        case "with_food":
-          timingMessage = "with meals";
-          break;
-        case "after_food":
-          timingMessage = "after meals";
-          break;
-        case "no_food_restriction":
-        default:
-          timingMessage = "as scheduled";
-          break;
-      }
-      
-      // Create notification for patient
-      const notification = {
-        userId: patient.userId,
-        title: "Medication Reminder Setup",
-        message: `Reminder set for ${medicationName} ${timingMessage}. You'll receive notifications when it's time to take your medication.`,
-        type: "medication_reminder",
-        isRead: false,
-        data: { scheduleId, medicationName, timing }
-      };
-      
-      await this.createNotification(notification);
-      
-      return true;
-    } catch (error) {
-      console.error("Error creating medication reminder:", error);
-      throw new Error("Failed to create medication reminder");
-    }
-  }
-  
-  /**
-   * Send medication reminder notification
-   * This would typically be called by a scheduled job
-   */
-  async sendMedicationReminderNotification(scheduleId: number) {
-    try {
-      // In a real implementation, we would get the medication schedule
-      // from the database using the scheduleId
-      const schedule = await db.query.medicationSchedules.findFirst({
-        where: eq(schema.medicationSchedules.id, scheduleId),
-        with: {
-          patient: {
-            with: {
-              user: true
-            }
-          }
-        }
-      });
-      
-      if (!schedule) {
-        throw new Error(`Medication schedule with ID ${scheduleId} not found`);
-      }
-      
-      // Format timing message
-      let timingMessage = "";
-      switch (schedule.timing) {
-        case "before_food":
-          timingMessage = "Take this medication before meals";
-          break;
-        case "with_food":
-          timingMessage = "Take this medication with meals";
-          break;
-        case "after_food":
-          timingMessage = "Take this medication after meals";
-          break;
-        case "no_food_restriction":
-        default:
-          timingMessage = "Take this medication as scheduled";
-          break;
-      }
-      
-      // Create notification for patient
-      const notification = {
-        userId: schedule.patient.user.id,
-        title: "Time to Take Your Medication",
-        message: `Reminder: It's time to take ${schedule.medicationName}. ${timingMessage}.`,
-        type: "medication_due",
-        isRead: false,
-        data: { scheduleId, medicationName: schedule.medicationName }
-      };
-      
-      await this.createNotification(notification);
-      
-      return true;
-    } catch (error) {
-      console.error("Error sending medication reminder notification:", error);
-      throw new Error("Failed to send medication reminder notification");
     }
   }
 }
