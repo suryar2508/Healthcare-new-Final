@@ -11,13 +11,19 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ component: Component, roles }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
   const [isAllowed, setIsAllowed] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (!isLoading) {
       const hasAccess = user && (!roles || roles.includes(user.role));
       setIsAllowed(hasAccess);
+      setIsInitialized(true);
     }
   }, [user, roles, isLoading]);
+
+  if (!isInitialized || isLoading) {
+    return <div>Loading...</div>;
+  }
 
   if (isLoading) {
     return <div>Loading...</div>;
