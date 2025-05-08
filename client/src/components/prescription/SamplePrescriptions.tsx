@@ -13,7 +13,7 @@ const samplePrescriptions = [
     doctor: "Dr. Sarah Johnson",
     hospital: "General Medical Center",
     medications: ["Amoxicillin 500mg"],
-    imageUrl: "https://i.imgur.com/VmvK86r.jpg" // You'll need to prepare and host these images
+    imageUrl: "https://openlabels.cc/res/rx/prescription_basic.jpg"
   },
   {
     id: 2,
@@ -22,7 +22,7 @@ const samplePrescriptions = [
     doctor: "Dr. Michael Chen",
     hospital: "Primary Care Associates",
     medications: ["Lisinopril 20mg", "Metformin 500mg", "Atorvastatin 10mg"],
-    imageUrl: "https://i.imgur.com/aXeEGv5.jpg"
+    imageUrl: "https://openlabels.cc/res/rx/prescription_multiple.jpg"
   },
   {
     id: 3,
@@ -31,7 +31,7 @@ const samplePrescriptions = [
     doctor: "Dr. Rachel Torres",
     hospital: "Endocrinology Clinic",
     medications: ["Insulin Glargine", "Metformin 1000mg"],
-    imageUrl: "https://i.imgur.com/VLfKMZk.jpg"
+    imageUrl: "https://openlabels.cc/res/rx/prescription_diabetes.jpg"
   },
   {
     id: 4,
@@ -40,7 +40,7 @@ const samplePrescriptions = [
     doctor: "Dr. James Wilson",
     hospital: "Orthopedic Specialists",
     medications: ["Hydrocodone 5mg", "Ibuprofen 800mg"],
-    imageUrl: "https://i.imgur.com/9XcWjp8.jpg"
+    imageUrl: "https://openlabels.cc/res/rx/prescription_pain.jpg"
   },
   {
     id: 5,
@@ -49,7 +49,7 @@ const samplePrescriptions = [
     doctor: "Dr. Elizabeth Patel",
     hospital: "Cardiology Center",
     medications: ["Metoprolol 50mg", "Aspirin 81mg", "Furosemide 20mg"],
-    imageUrl: "https://i.imgur.com/klQu9hr.jpg"
+    imageUrl: "https://openlabels.cc/res/rx/prescription_cardiac.jpg"
   },
   {
     id: 6,
