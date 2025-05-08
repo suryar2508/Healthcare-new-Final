@@ -131,14 +131,11 @@ function Router() {
       />
       
       {/* Patient routes */}
-      <Route path="/patient">
-        {() => {
-          const { user } = useAuth();
-          if (!user) return <Redirect to="/auth" />;
-          if (user.role !== "patient") return <Redirect to={`/${user.role}`} />;
-          return <PatientDashboardPage />;
-        }}
-      </Route>
+      <ProtectedRoute 
+        path="/patient" 
+        component={PatientDashboardPage}
+        allowedRoles={["patient"]} 
+      />
       <ProtectedRoute 
         path="/patient/appointments" 
         component={PatientAppointmentsPage} 

@@ -1,5 +1,7 @@
+import React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import {
