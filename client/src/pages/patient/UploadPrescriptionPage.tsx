@@ -189,10 +189,17 @@ export default function UploadPrescriptionPage() {
       // Store upload ID and extracted data
       setUploadId(data.id);
       
-      // Parse the extracted text from JSON string if it exists
-      if (data.extractedText) {
+      // Set analysis results directly from the API response
+      if (data.analysisResults) {
+        console.log("Analysis results received:", data.analysisResults);
+        setAnalysisResults(data.analysisResults);
+      } else if (data.extractedText) {
+        // Fallback: Parse the extracted text from JSON string if it exists
         try {
-          const extractedData = JSON.parse(data.extractedText);
+          console.log("Parsing extractedText:", data.extractedText);
+          const extractedData = typeof data.extractedText === 'string' 
+            ? JSON.parse(data.extractedText) 
+            : data.extractedText;
           setAnalysisResults(extractedData);
         } catch (error) {
           console.error("Error parsing extracted text:", error);
@@ -204,6 +211,7 @@ export default function UploadPrescriptionPage() {
         }
       } else {
         // Handle case where no text was extracted
+        console.warn("No analysis results or extracted text in API response");
         setAnalysisResults({
           medications: [],
           doctor: {},
@@ -298,7 +306,33 @@ export default function UploadPrescriptionPage() {
   
   // Render medications from analysis results
   const renderMedications = () => {
-    if (!analysisResults || !analysisResults.medications || !analysisResults.medications.length) {
+    console.log("Rendering medications from analysis results:", analysisResults);
+    
+    if (!analysisResults) {
+      console.warn("No analysis results available");
+      return (
+        <div className="text-center py-8">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">No analysis results yet</p>
+        </div>
+      );
+    }
+    
+    if (!analysisResults.medications) {
+      console.warn("No medications property in analysis results");
+      return (
+        <div className="text-center py-8">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">No medications found in analysis</p>
+          <pre className="text-xs text-left mt-4 bg-muted p-2 rounded overflow-auto max-h-48">
+            {JSON.stringify(analysisResults, null, 2)}
+          </pre>
+        </div>
+      );
+    }
+    
+    if (!analysisResults.medications.length) {
+      console.warn("Empty medications array in analysis results");
       return (
         <div className="text-center py-8">
           <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
