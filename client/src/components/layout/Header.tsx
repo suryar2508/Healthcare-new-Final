@@ -69,15 +69,14 @@ export default function Header({ toggleSidebar }: HeaderProps) {
       
       {user && (
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <DropdownMenuItem 
+            className="text-destructive focus:text-destructive" 
             onClick={() => logoutMutation.mutate()}
-            className="flex items-center gap-2 text-destructive"
+            disabled={logoutMutation.isPending}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4 mr-2" />
             {logoutMutation.isPending ? "Logging out..." : "Logout"}
-          </Button>
+          </DropdownMenuItem>
           {/* Special link to the patient test page - accessible to all users */}
           <Button variant="outline" size="sm" asChild className="border-yellow-500 text-yellow-600 hover:bg-yellow-50">
             <Link href="/patient-test" className="flex items-center gap-1">
