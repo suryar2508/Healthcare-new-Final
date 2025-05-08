@@ -44,8 +44,7 @@ export default function AuthPage() {
   React.useEffect(() => {
     // Redirect if already logged in
     if (user) {
-      const redirectPath = getRedirectPathForRole(user.role);
-      navigate(redirectPath);
+      navigate('/auth-check');
     }
   }, [user, navigate]);
   

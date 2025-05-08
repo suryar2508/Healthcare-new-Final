@@ -41,8 +41,13 @@ function Router() {
       {/* Auth route */}
       <Route path="/auth" component={AuthPage} />
 
-      {/* Home route - redirects based on auth status and role */}
+      {/* Root route - always redirects to auth first */}
       <Route path="/">
+        {() => <Redirect to="/auth" />}
+      </Route>
+
+      {/* Auth check route */}
+      <Route path="/auth-check">
         {() => {
           const { user } = useAuth();
           if (!user) {
