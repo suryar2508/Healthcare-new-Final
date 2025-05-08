@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Upload, FileImage, FileText, FilePlus2, FilePen, AlertCircle, CheckCircle, Ban, Undo2, BellRing, Clock } from "lucide-react";
+import { Loader2, Upload, FileImage, FileText, FilePlus2, FilePen, AlertCircle, CheckCircle, Ban, Undo2, BellRing, Clock, FileCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
@@ -37,6 +37,10 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+
+// Import sample prescriptions component
+import SamplePrescriptions from "@/components/prescription/SamplePrescriptions";
+import MedicationReminderForm from "@/components/notification/MedicationReminderForm";
 
 export default function UploadPrescriptionPage() {
   const { user } = useAuth();
@@ -422,63 +426,74 @@ export default function UploadPrescriptionPage() {
                   />
                 </div>
                 
-                {schedule.enableNotifications && (
-                  <div className="rounded-md p-3 bg-muted/30 space-y-1">
-                    <div className="flex items-center">
-                      <BellRing className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm font-medium">Reminder Settings</span>
+                <div className="space-y-1">
+                  <Label>Start/End Dates</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor={`start-date-${index}`} className="sr-only">Start Date</Label>
+                      <input
+                        id={`start-date-${index}`}
+                        type="date"
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        value={schedule.startDate}
+                        min={format(new Date(), 'yyyy-MM-dd')}
+                        onChange={(e) => updateMedicationSchedule(index, 'startDate', e.target.value)}
+                      />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      You'll receive notifications 15 minutes before your scheduled medication time.
-                    </p>
+                    <div>
+                      <Label htmlFor={`end-date-${index}`} className="sr-only">End Date</Label>
+                      <input
+                        id={`end-date-${index}`}
+                        type="date"
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        value={schedule.endDate}
+                        min={schedule.startDate}
+                        onChange={(e) => updateMedicationSchedule(index, 'endDate', e.target.value)}
+                      />
+                    </div>
                   </div>
-                )}
+                </div>
                 
-                <div className="grid gap-1">
-                  <Label>Duration</Label>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div>Start: {schedule.startDate}</div>
-                    <Clock className="h-3 w-3 mx-1" />
-                    <div>End: {schedule.endDate}</div>
-                  </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`instructions-${index}`}>Additional Instructions</Label>
+                  <Textarea
+                    id={`instructions-${index}`}
+                    placeholder="Any special instructions"
+                    className="resize-none"
+                    value={schedule.instructions}
+                    onChange={(e) => updateMedicationSchedule(index, 'instructions', e.target.value)}
+                  />
                 </div>
               </div>
             </div>
           </div>
         ))}
         
-        <Button 
-          className="w-full" 
+        <Button
+          className="w-full"
           onClick={() => {
-            // Create medication schedules
-            if (user?.id && medicationSchedules.length > 0) {
-              const scheduleData = medicationSchedules.map(schedule => ({
-                ...schedule,
-                patientId: user.id,
-                prescriptionId: convertToPrescriptionMutation.data?.prescriptionId
-              }));
-              
-              createMedicationScheduleMutation.mutate(scheduleData);
+            if (medicationSchedules.length > 0) {
+              createMedicationScheduleMutation.mutate(medicationSchedules);
             }
           }}
-          disabled={!prescriptionCreated || createMedicationScheduleMutation.isPending}
+          disabled={createMedicationScheduleMutation.isPending || medicationSchedules.length === 0}
         >
           {createMedicationScheduleMutation.isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating Schedules...
+              Saving Schedules...
             </>
           ) : (
             <>
               <BellRing className="mr-2 h-4 w-4" />
-              Create Medication Schedules
+              Save Medication Schedules
             </>
           )}
         </Button>
       </div>
     );
   };
-  
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -488,295 +503,307 @@ export default function UploadPrescriptionPage() {
         </p>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Prescription Image</CardTitle>
-            <CardDescription>
-              Take a clear photo or scan of your prescription
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div 
-                className={`
-                  border-2 border-dashed rounded-lg p-8 w-full h-48 flex flex-col items-center justify-center
-                  ${previewUrl ? 'border-primary' : 'border-muted-foreground/25'}
-                  ${uploadMutation.isPending ? 'bg-muted/50' : 'hover:bg-muted/50 cursor-pointer'}
-                `}
-                onClick={() => !uploadMutation.isPending && document.getElementById('prescription-upload')?.click()}
-              >
-                {previewUrl ? (
-                  <div className="relative w-full h-full">
-                    <img src={previewUrl} alt="Prescription preview" className="object-contain w-full h-full" />
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="absolute top-0 right-0 bg-background" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleReset();
-                      }}
-                      disabled={uploadMutation.isPending}
+      <div className="grid grid-cols-1 gap-6">
+        <Tabs defaultValue="upload">
+          <TabsList className="w-full md:w-auto">
+            <TabsTrigger value="upload">Upload Prescription</TabsTrigger>
+            <TabsTrigger value="samples">Sample Prescriptions</TabsTrigger>
+            <TabsTrigger value="reminders">Medication Reminders</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="upload" className="mt-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload Prescription Image</CardTitle>
+                  <CardDescription>
+                    Take a clear photo or scan of your prescription
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div 
+                      className={`
+                        border-2 border-dashed rounded-lg p-8 w-full h-48 flex flex-col items-center justify-center
+                        ${previewUrl ? 'border-primary' : 'border-muted-foreground/25'}
+                        ${uploadMutation.isPending ? 'bg-muted/50' : 'hover:bg-muted/50 cursor-pointer'}
+                      `}
+                      onClick={() => !uploadMutation.isPending && document.getElementById('prescription-upload')?.click()}
                     >
-                      <Ban className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <FileImage className="h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground text-center">
-                      {uploadMutation.isPending ? (
-                        <span className="flex items-center">
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Analyzing prescription...
-                        </span>
+                      {previewUrl ? (
+                        <div className="relative w-full h-full">
+                          <img src={previewUrl} alt="Prescription preview" className="object-contain w-full h-full" />
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="absolute top-0 right-0 bg-background" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReset();
+                            }}
+                            disabled={uploadMutation.isPending}
+                          >
+                            <Ban className="h-4 w-4" />
+                          </Button>
+                        </div>
                       ) : (
-                        <span>
-                          Click to upload or drag and drop<br />
-                          JPG, PNG or PDF (max 10MB)
-                        </span>
+                        <>
+                          <FileImage className="h-10 w-10 text-muted-foreground mb-2" />
+                          <p className="text-sm text-muted-foreground text-center">
+                            {uploadMutation.isPending ? (
+                              <span className="flex items-center">
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Analyzing prescription...
+                              </span>
+                            ) : (
+                              <span>
+                                Click to upload or drag and drop<br />
+                                JPG, PNG or PDF (max 10MB)
+                              </span>
+                            )}
+                          </p>
+                        </>
                       )}
-                    </p>
-                  </>
-                )}
-                <input 
-                  id="prescription-upload" 
-                  type="file" 
-                  accept="image/jpeg,image/png,application/pdf" 
-                  className="hidden" 
-                  onChange={handleFileChange}
-                  disabled={uploadMutation.isPending}
-                />
-              </div>
+                      <input 
+                        id="prescription-upload" 
+                        type="file" 
+                        accept="image/jpeg,image/png,application/pdf" 
+                        className="hidden" 
+                        onChange={handleFileChange}
+                        disabled={uploadMutation.isPending}
+                      />
+                    </div>
+                    
+                    <Textarea 
+                      placeholder="Add notes about this prescription (optional)" 
+                      className="resize-none" 
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      disabled={uploadMutation.isPending}
+                    />
+                    
+                    <div className="flex w-full justify-between space-x-2">
+                      <Button 
+                        variant="outline" 
+                        className="w-1/2"
+                        onClick={handleReset}
+                        disabled={!selectedFile || uploadMutation.isPending}
+                      >
+                        Reset
+                      </Button>
+                      <Button 
+                        className="w-1/2"
+                        onClick={() => uploadMutation.mutate()}
+                        disabled={!base64Image || uploadMutation.isPending}
+                      >
+                        {uploadMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            Analyze Prescription
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex flex-col text-xs text-muted-foreground space-y-2">
+                  <p>
+                    Our AI will extract medication details, dosage, and other information from your prescription.
+                  </p>
+                  <p>
+                    For best results, ensure the prescription is well-lit and clearly legible.
+                  </p>
+                </CardFooter>
+              </Card>
               
-              <Textarea 
-                placeholder="Add notes about this prescription (optional)" 
-                className="resize-none" 
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                disabled={uploadMutation.isPending}
-              />
-              
-              <div className="flex w-full justify-between space-x-2">
-                <Button 
-                  variant="outline" 
-                  className="w-1/2"
-                  onClick={handleReset}
-                  disabled={!selectedFile || uploadMutation.isPending}
-                >
-                  Reset
-                </Button>
-                <Button 
-                  className="w-1/2"
-                  onClick={() => uploadMutation.mutate()}
-                  disabled={!base64Image || uploadMutation.isPending}
-                >
-                  {uploadMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Analyze Prescription
-                    </>
-                  )}
-                </Button>
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <FileText className="mr-2 h-5 w-5" /> Analysis Results
+                    </CardTitle>
+                    <CardDescription>
+                      {analysisResults ? 'Extracted information from your prescription' : 'Upload a prescription to see results'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {analysisResults ? (
+                      <Tabs defaultValue="medications">
+                        <TabsList className="grid w-full grid-cols-4">
+                          <TabsTrigger value="medications">Medications</TabsTrigger>
+                          <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                          <TabsTrigger value="doctor">Doctor</TabsTrigger>
+                          <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="medications" className="mt-4">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <h3 className="text-lg font-semibold">Prescribed Medications</h3>
+                              <Badge variant="outline">
+                                {analysisResults.medications?.length || 0} items
+                              </Badge>
+                            </div>
+                            {renderMedications()}
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="schedule" className="mt-4">
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <h3 className="text-lg font-semibold">Medication Schedule</h3>
+                              <Badge variant="outline">
+                                Configure Reminders
+                              </Badge>
+                            </div>
+                            {renderMedicationScheduling()}
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="doctor" className="mt-4">
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-semibold">Doctor Information</h3>
+                            <div className="grid grid-cols-2 gap-y-2">
+                              <div className="text-sm text-muted-foreground">Name:</div>
+                              <div className="text-sm font-medium">
+                                {analysisResults.doctor?.name || "Not detected"}
+                              </div>
+                              
+                              <div className="text-sm text-muted-foreground">Specialization:</div>
+                              <div className="text-sm font-medium">
+                                {analysisResults.doctor?.specialization || "Not detected"}
+                              </div>
+                              
+                              <div className="text-sm text-muted-foreground">Contact:</div>
+                              <div className="text-sm font-medium">
+                                {analysisResults.doctor?.contact || "Not detected"}
+                              </div>
+                              
+                              <div className="text-sm text-muted-foreground">Hospital/Clinic:</div>
+                              <div className="text-sm font-medium">
+                                {analysisResults.doctor?.clinic || "Not detected"}
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="diagnosis" className="mt-4">
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-semibold">Medical Information</h3>
+                            <div className="grid grid-cols-2 gap-y-2">
+                              <div className="text-sm text-muted-foreground">Diagnosis:</div>
+                              <div className="text-sm font-medium">
+                                {analysisResults.diagnosis || "Not detected"}
+                              </div>
+                              
+                              <div className="text-sm text-muted-foreground">Date:</div>
+                              <div className="text-sm font-medium">
+                                {analysisResults.date || "Not detected"}
+                              </div>
+                              
+                              <div className="text-sm text-muted-foreground">Follow-up:</div>
+                              <div className="text-sm font-medium">
+                                {analysisResults.followUp || "Not specified"}
+                              </div>
+                            </div>
+                            
+                            <div className="pt-2">
+                              <div className="text-sm text-muted-foreground">Additional Instructions:</div>
+                              <div className="text-sm mt-1 p-2 bg-muted rounded">
+                                {analysisResults.instructions || "No additional instructions detected"}
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                        <p className="text-center text-muted-foreground">
+                          Upload a prescription image to see analysis results here.
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="flex flex-col space-y-3">
+                    {prescriptionCreated ? (
+                      <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-900 space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <p className="font-medium text-green-700 dark:text-green-300">Prescription Created Successfully</p>
+                        </div>
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                          Your prescription has been created and sent to the pharmacy.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          disabled={!convertToPrescriptionMutation.data?.prescriptionId || generateBillMutation.isPending}
+                          onClick={() => {
+                            if (convertToPrescriptionMutation.data?.prescriptionId) {
+                              generateBillMutation.mutate(convertToPrescriptionMutation.data.prescriptionId);
+                            }
+                          }}
+                        >
+                          {generateBillMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <FilePen className="mr-2 h-4 w-4" />
+                              Generate Bill
+                            </>
+                          )}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          className="w-full" 
+                          onClick={handleReset}
+                        >
+                          <Undo2 className="mr-2 h-4 w-4" />
+                          Upload New Prescription
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        disabled={!analysisResults || convertToPrescriptionMutation.isPending || !uploadId}
+                        onClick={() => convertToPrescriptionMutation.mutate()}
+                      >
+                        {convertToPrescriptionMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <FilePlus2 className="mr-2 h-4 w-4" />
+                            Convert to Prescription
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
               </div>
             </div>
-          </CardContent>
-          <CardFooter className="flex flex-col text-xs text-muted-foreground space-y-2">
-            <p>
-              Our AI will extract medication details, dosage, and other information from your prescription.
-            </p>
-            <p>
-              For best results, ensure the prescription is well-lit and clearly legible.
-            </p>
-          </CardFooter>
-        </Card>
-        
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Analysis Results</CardTitle>
-              <CardDescription>
-                {analysisResults ? 'Extracted information from your prescription' : 'Upload a prescription to see results'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {analysisResults ? (
-                <Tabs defaultValue="medications">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="medications">Medications</TabsTrigger>
-                    <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                    <TabsTrigger value="doctor">Doctor Details</TabsTrigger>
-                    <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="medications" className="mt-4">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-semibold">Prescribed Medications</h3>
-                        <Badge variant="outline">
-                          {analysisResults.medications?.length || 0} items
-                        </Badge>
-                      </div>
-                      {renderMedications()}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="schedule" className="mt-4">
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-semibold">Medication Schedule</h3>
-                        <Badge variant="outline">
-                          Configure Reminders
-                        </Badge>
-                      </div>
-                      {renderMedicationScheduling()}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="doctor" className="mt-4">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Doctor Information</h3>
-                      <div className="grid grid-cols-2 gap-y-2">
-                        <div className="text-sm text-muted-foreground">Name:</div>
-                        <div className="text-sm font-medium">
-                          {analysisResults.doctor?.name || "Not detected"}
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground">Specialization:</div>
-                        <div className="text-sm font-medium">
-                          {analysisResults.doctor?.specialization || "Not detected"}
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground">Contact:</div>
-                        <div className="text-sm font-medium">
-                          {analysisResults.doctor?.contact || "Not detected"}
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground">Hospital/Clinic:</div>
-                        <div className="text-sm font-medium">
-                          {analysisResults.doctor?.clinic || "Not detected"}
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="diagnosis" className="mt-4">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold">Medical Information</h3>
-                      <div className="grid grid-cols-2 gap-y-2">
-                        <div className="text-sm text-muted-foreground">Diagnosis:</div>
-                        <div className="text-sm font-medium">
-                          {analysisResults.diagnosis || "Not detected"}
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground">Date:</div>
-                        <div className="text-sm font-medium">
-                          {analysisResults.date || "Not detected"}
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground">Follow-up:</div>
-                        <div className="text-sm font-medium">
-                          {analysisResults.followUp || "Not specified"}
-                        </div>
-                      </div>
-                      
-                      <div className="pt-2">
-                        <div className="text-sm text-muted-foreground">Additional Instructions:</div>
-                        <div className="text-sm mt-1 p-2 bg-muted rounded">
-                          {analysisResults.instructions || "No additional instructions detected"}
-                        </div>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10 space-y-4">
-                  <FileText className="h-16 w-16 text-muted-foreground/50" />
-                  <p className="text-muted-foreground text-center">
-                    Upload a prescription image<br />to see the AI analysis results here
-                  </p>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-3">
-              {prescriptionCreated ? (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-900 space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <p className="font-medium text-green-700 dark:text-green-300">Prescription Created Successfully</p>
-                  </div>
-                  <p className="text-sm text-green-600 dark:text-green-400">
-                    Your prescription has been created and sent to the pharmacy.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    disabled={!convertToPrescriptionMutation.data?.prescriptionId || generateBillMutation.isPending}
-                    onClick={() => {
-                      if (convertToPrescriptionMutation.data?.prescriptionId) {
-                        generateBillMutation.mutate(convertToPrescriptionMutation.data.prescriptionId);
-                      }
-                    }}
-                  >
-                    {generateBillMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <FilePen className="mr-2 h-4 w-4" />
-                        Generate Bill
-                      </>
-                    )}
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full" 
-                    onClick={handleReset}
-                  >
-                    <Undo2 className="mr-2 h-4 w-4" />
-                    Upload New Prescription
-                  </Button>
-                </div>
-              ) : (
-                <Button 
-                  className="w-full" 
-                  disabled={!analysisResults || convertToPrescriptionMutation.isPending}
-                  onClick={() => convertToPrescriptionMutation.mutate()}
-                >
-                  {convertToPrescriptionMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <FilePlus2 className="mr-2 h-4 w-4" />
-                      Convert to Prescription
-                    </>
-                  )}
-                </Button>
-              )}
-            </CardFooter>
-          </Card>
+          </TabsContent>
           
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold mb-2">How It Works</h3>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-              <li>Upload a clear photo of your prescription</li>
-              <li>Our AI system will analyze and extract the information</li>
-              <li>Review the extracted medications and details</li>
-              <li>Convert to a digital prescription or generate a bill</li>
-            </ol>
-          </div>
-        </div>
+          <TabsContent value="samples" className="mt-6">
+            <SamplePrescriptions />
+          </TabsContent>
+          
+          <TabsContent value="reminders" className="mt-6">
+            <MedicationReminderForm />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
