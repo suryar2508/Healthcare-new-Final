@@ -17,7 +17,13 @@ import { Progress } from "@/components/ui/progress";
 
 export default function PatientDashboardPage() {
   const { user } = useAuth();
+  const [isLoading, setIsLoading] = React.useState(true);
   
+  React.useEffect(() => {
+    // Simulate data loading
+    setTimeout(() => setIsLoading(false), 1000);
+  }, []);
+
   // Get the current date
   const today = new Date();
   const options: Intl.DateTimeFormatOptions = { 
@@ -27,6 +33,18 @@ export default function PatientDashboardPage() {
     day: 'numeric' 
   };
   const formattedDate = today.toLocaleDateString(undefined, options);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/auth" />;
+  }
   
   return (
     <div className="container mx-auto p-6">
