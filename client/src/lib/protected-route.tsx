@@ -1,6 +1,7 @@
+
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
 import { Redirect } from "wouter";
-import { useEffect } from "react";
 
 interface ProtectedRouteProps {
   component: React.ComponentType;
@@ -9,10 +10,14 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ component: Component, roles }: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
+  const [isAllowed, setIsAllowed] = useState(false);
 
   useEffect(() => {
-    console.log("Protected route check", { user, roles });
-  }, [user, roles]);
+    if (!isLoading) {
+      const hasAccess = user && (!roles || roles.includes(user.role));
+      setIsAllowed(hasAccess);
+    }
+  }, [user, roles, isLoading]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -22,7 +27,7 @@ export default function ProtectedRoute({ component: Component, roles }: Protecte
     return <Redirect to="/auth" />;
   }
 
-  if (roles && !roles.includes(user.role)) {
+  if (!isAllowed) {
     return <Redirect to="/unauthorized" />;
   }
 
